@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>耘仓温室精准种植智能管控系统 v5</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.4.3/echarts.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+
+:root{--bg:#eef4fd;--panel:#fff;--border:#dce8f8;--border2:#eaf2fd;--blue:#1677ff;--blue2:#4096ff;--blue3:#e6f0ff;--blue4:#0958d9;--green:#52c41a;--green2:#f6ffed;--green3:#b7eb8f;--red:#ff4d4f;--red2:#fff2f0;--red3:#ffccc7;--orange:#fa8c16;--yellow:#faad14;--cyan:#13c2c2;--t1:#1a2232;--t2:#4a6080;--t3:#8a9ab0;--sh:0 2px 10px rgba(22,119,255,.09);--sh2:0 4px 18px rgba(22,119,255,.14);--mono:'JetBrains Mono',monospace;--sans:'Noto Sans SC',sans-serif;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:var(--sans);background:var(--bg);color:var(--t1);height:100vh;overflow:hidden;display:flex;flex-direction:column;}
+header{height:52px;background:linear-gradient(135deg,#081d4e 0%,#1245a8 55%,#1677ff 100%);display:flex;align-items:center;justify-content:space-between;padding:0 16px;flex-shrink:0;position:relative;overflow:hidden;}
+.hbrand{display:flex;align-items:center;gap:10px;z-index:1;}
+.hlogo{width:34px;height:34px;background:rgba(255,255,255,.15);border:1.5px solid rgba(255,255,255,.3);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;}
+.htitle{font-size:16px;font-weight:700;color:#fff;letter-spacing:2px;}
+.hsub{font-size:9px;color:rgba(255,255,255,.55);letter-spacing:1px;}
+.hgrowth{position:absolute;left:50%;transform:translateX(-50%);display:flex;align-items:center;z-index:1;}
+.gstage{font-size:9px;padding:3px 10px;color:rgba(255,255,255,.5);white-space:nowrap;border-radius:12px;}
+.gstage.cur{background:rgba(82,196,26,.25);color:#b7eb8f;border:1px solid rgba(82,196,26,.4);font-weight:700;}
+.garrow{color:rgba(255,255,255,.2);font-size:8px;margin:0 -1px;}
+.hmeta{display:flex;align-items:center;gap:12px;z-index:1;}
+.hstat{font-size:10px;color:rgba(255,255,255,.7);display:flex;align-items:center;gap:4px;}
+.pulse{width:7px;height:7px;border-radius:50%;background:#52c41a;box-shadow:0 0 6px #52c41a;animation:pa 2s ease-in-out infinite;}
+@keyframes pa{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.4;transform:scale(.7)}}
+#clk{font-family:var(--mono);font-size:13px;color:#fff;}
+.main{flex:1;display:flex;flex-direction:column;gap:5px;padding:5px;overflow:hidden;}
+.toprow{display:grid;grid-template-columns:580px 1fr 255px;gap:5px;height:50%;flex-shrink:0;}
+.botrow{flex:1;overflow:hidden;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--sh);}
+.ph{padding:7px 10px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:linear-gradient(90deg,#f6fbff,#fff);}
+.pt{font-size:11px;font-weight:700;color:var(--blue4);display:flex;align-items:center;gap:5px;letter-spacing:.5px;}
+.ptbar{width:3px;height:11px;background:var(--blue);border-radius:2px;}
+.pbadge{font-size:9px;padding:1px 7px;border-radius:8px;background:var(--blue3);color:var(--blue);font-family:var(--mono);}
+.pbadge.ok{background:var(--green2);color:var(--green);border:1px solid var(--green3);}
+.pbadge.warn{background:var(--red2);color:var(--red);border:1px solid var(--red3);animation:blink 1s ease-in-out infinite;}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* SENSOR PANEL — 2x2 grid */
+#sp{flex-direction:column;}
+#sp .pb-body{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:5px 8px 6px;}
+.sp-top-bar{display:flex;align-items:center;justify-content:space-between;flex-shrink:0;padding:3px 0 4px;}
+.tw-bar{display:flex;align-items:center;gap:2px;flex-wrap:nowrap;}
+.tw-lbl{font-size:9px;color:var(--t3);white-space:nowrap;margin-right:3px;}
+.tw-btn{font-size:9px;padding:2px 5px;border:1px solid var(--border);border-radius:3px;background:var(--bg);color:var(--t2);cursor:pointer;white-space:nowrap;transition:all .2s;font-family:var(--mono);}
+.tw-btn.active{background:var(--blue3);border-color:var(--blue2);color:var(--blue);font-weight:700;}
+.sp-sample-info{font-size:9px;color:var(--t3);white-space:nowrap;}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;gap:4px;flex:1;min-height:0;}
+.chart-cell{min-height:0;overflow:hidden;display:flex;flex-direction:column;}
+.chart-cell-hd{font-size:9px;color:var(--t3);letter-spacing:.8px;text-transform:uppercase;padding:1px 3px;flex-shrink:0;display:flex;align-items:center;gap:4px;}
+.chart-cell-hd .badge-grp{font-size:9px;padding:0 5px;border-radius:3px;background:var(--bg);border:1px solid var(--border2);color:var(--t3);}
+.chart-container{flex:1;min-height:0;border:1px solid var(--border2);border-radius:4px;overflow:hidden;}
+
+/* Custom HTML legend — 2-column grid above each chart */
+.chart-legend{flex-shrink:0;display:grid;grid-template-columns:1fr 1fr;gap:1px 6px;padding:2px 4px 1px;font-size:9.5px;line-height:1.5;}
+.chart-legend.leg-3col .leg-item:last-child{grid-column:1 / -1;justify-self:center;}
+.leg-item{display:flex;align-items:center;gap:3px;cursor:pointer;user-select:none;white-space:nowrap;padding:0 2px;border-radius:2px;transition:opacity .2s;}
+.leg-item:hover{background:rgba(22,119,255,0.06);}
+.leg-item.off{opacity:.3;}
+.leg-line{width:14px;height:3px;border-radius:1px;flex-shrink:0;}
+.leg-name{min-width:54px;color:#4a6080;}
+.leg-val{min-width:50px;text-align:right;font-family:'JetBrains Mono',monospace;color:#1677ff;}
+.leg-val.warn{color:#ff4d4f;font-weight:500;}
+
+/* AI PANEL */
+#ap{flex-direction:column;}
+.ai-cyc-bar{display:flex;align-items:center;gap:7px;padding:5px 8px;background:var(--bg);border-bottom:1px solid var(--border2);font-size:10px;flex-shrink:0;}
+.ai-mode-pill{padding:2px 8px;border-radius:8px;font-size:10px;font-weight:700;letter-spacing:.5px;transition:all .3s;white-space:nowrap;}
+.aim-normal{background:var(--green2);color:#237804;border:1px solid var(--green3);}
+.aim-check{background:#fff7e6;color:#ad6800;border:1px solid #ffe58f;}
+.aim-warn{background:var(--red2);color:var(--red);border:1px solid var(--red3);animation:blink 1s ease-in-out infinite;}
+.aim-api{background:var(--blue3);color:var(--blue4);border:1px solid #91caff;animation:apipulse 1.2s ease-in-out infinite;}
+@keyframes apipulse{0%,100%{opacity:1;box-shadow:0 0 0 rgba(22,119,255,0)}50%{opacity:.85;box-shadow:0 0 8px rgba(22,119,255,.3)}}
+.aim-exec{background:#fff7e6;color:#ad6800;border:1px solid #ffe58f;}
+.ai-cyc-prog{flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.ai-cyc-prog-fill{height:100%;background:var(--blue);border-radius:3px;transition:width 1s linear,background .3s;}
+.ai-cyc-num{font-family:var(--mono);font-size:11px;color:var(--blue);width:20px;text-align:right;}
+.ai-inf-row{font-size:9px;color:var(--t3);display:flex;gap:10px;}
+
+/* AI LOG TERMINAL */
+#ap .pb-body{flex:1;display:flex;flex-direction:column;overflow:hidden;padding:0;position:relative;}
+.ai-log-wrap{flex:1;display:flex;flex-direction:column;overflow:hidden;position:absolute;inset:0;}
+.ai-log-hd{font-size:9px;color:var(--t3);letter-spacing:1px;padding:3px 9px;background:#f6fbff;display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.ai-log{background:#0d1b2e;flex:1;overflow-y:auto;padding:5px 9px;font-family:var(--mono);font-size:9px;line-height:1.6;}
+.ai-log::-webkit-scrollbar{width:3px;}
+.ai-log::-webkit-scrollbar-thumb{background:#1e3a5a;border-radius:2px;}
+.log-copy-btn{font-size:8px;padding:1px 6px;border:1px solid #1e3a5a;border-radius:3px;background:transparent;color:#4a8ab0;cursor:pointer;}
+.log-copy-btn:hover{border-color:#4096ff;color:#4096ff;}
+
+/* AI OVERLAYS — dark frosted-glass floating panels on top of log terminal */
+.ai-anomaly-box{
+  position:absolute;top:28px;left:12px;right:12px;z-index:10;
+  background:rgba(20,8,8,0.90);border:1px solid rgba(255,77,79,0.45);border-radius:8px;
+  padding:10px 12px;opacity:0;pointer-events:none;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 6px 28px rgba(0,0,0,0.45),0 0 0 1px rgba(255,77,79,0.08) inset;
+  transition:opacity .8s ease-out;
+  max-height:34%;overflow-y:auto;
+  overflow-x:hidden;
+}
+.ai-anomaly-box.show{opacity:1;pointer-events:auto;}
+.ai-anomaly-box::-webkit-scrollbar{width:3px;}
+.ai-anomaly-box::-webkit-scrollbar-thumb{background:rgba(255,77,79,0.35);border-radius:2px;}
+.ai-anomaly-box::-webkit-scrollbar-track{background:rgba(0,0,0,0.2);}
+.ai-atitle{font-size:13px;color:#ffa39e;font-weight:700;margin-bottom:5px;}
+.ai-atags{display:flex;flex-wrap:wrap;gap:4px;}
+.ai-atag{font-size:10px;background:rgba(255,77,79,0.18);border:1px solid rgba(255,77,79,0.4);border-radius:4px;padding:3px 9px;color:#ffccc7;font-weight:500;}
+
+.aist-box{
+  position:absolute;top:28px;left:12px;right:12px;z-index:10;
+  background:rgba(8,15,30,0.90);border:1px solid rgba(22,119,255,0.45);border-radius:8px;
+  padding:10px 12px;opacity:0;pointer-events:none;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 6px 28px rgba(0,0,0,0.45),0 0 0 1px rgba(22,119,255,0.06) inset;
+  transition:opacity .8s ease-out;
+  max-height:52%;overflow-y:auto;
+  overflow-x:hidden;
+}
+.aist-box.show{opacity:1;pointer-events:auto;}
+.aist-box::-webkit-scrollbar{width:3px;}
+.aist-box::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px;}
+
+.ai-routine-box{
+  position:absolute;top:28px;left:12px;right:12px;z-index:10;
+  background:rgba(5,18,5,0.90);border:1px solid rgba(82,196,26,0.45);border-radius:8px;
+  padding:10px 12px;opacity:0;pointer-events:none;
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  box-shadow:0 6px 28px rgba(0,0,0,0.45),0 0 0 1px rgba(82,196,26,0.06) inset;
+  transition:opacity .8s ease-out;
+  max-height:52%;overflow-y:auto;
+  overflow-x:hidden;
+}
+.ai-routine-box.show{opacity:1;pointer-events:auto;}
+.ai-routine-box::-webkit-scrollbar{width:3px;}
+.ai-routine-box::-webkit-scrollbar-thumb{background:var(--green3);border-radius:2px;}
+
+.adv-list{display:flex;flex-direction:column;gap:5px;}
+.adv-item{display:flex;gap:7px;opacity:0;transform:translateX(-5px);transition:all .4s;}
+.adv-item.vis{opacity:1;transform:translateX(0);}
+.adv-num{width:18px;height:18px;border-radius:50%;flex-shrink:0;background:var(--blue);color:white;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:2px;}
+.adv-num.g{background:var(--green);}
+.adv-txt{font-size:12px;color:#e8e8e8;line-height:1.5;}
+.adv-sub{font-size:10px;color:#a0a8b8;margin-top:2px;}
+.aist-title{font-size:11px;color:#91caff;letter-spacing:.5px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;font-weight:600;}
+.ai-rtitle{font-size:11px;color:#b7eb8f;margin-bottom:5px;font-weight:600;}
+
+/* ACTUATOR PANEL */
+#ep .pb-body{flex:1;overflow-y:auto;padding:6px;}
+#ep .pb-body::-webkit-scrollbar{width:3px;}
+.ep-sec-hd{font-size:9px;color:var(--t3);letter-spacing:1px;text-transform:uppercase;padding:2px 0;border-bottom:1px solid var(--border2);margin-bottom:4px;}
+.fan-widget{display:flex;align-items:center;gap:6px;padding:4px 6px;background:var(--bg);border:1px solid var(--border2);border-radius:4px;margin-bottom:3px;}
+.fan-svg-wrap{width:40px;height:40px;flex-shrink:0;}
+.fan-meta{flex:1;}
+.fan-row1{display:flex;align-items:center;justify-content:space-between;margin-bottom:3px;}
+.fan-name{font-size:10px;color:var(--t2);}
+.fan-watt{font-family:var(--mono);font-size:11px;color:var(--blue);}
+.fan-badge{font-size:8px;padding:1px 5px;border-radius:8px;white-space:nowrap;}
+.fan-badge.on{background:var(--blue3);color:var(--blue);}
+.fan-badge.off{background:var(--bg);color:var(--t3);}
+.fan-prog-wrap{height:4px;background:var(--border);border-radius:2px;overflow:hidden;}
+.fan-prog{height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan));border-radius:2px;transition:width .6s;}
+.shade-row{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+.shade-lbl{font-size:10px;color:var(--t2);width:45px;}
+.shade-trk{flex:1;height:8px;background:var(--border);border-radius:3px;overflow:hidden;}
+.shade-fill{height:100%;background:linear-gradient(90deg,#d48806,#ffd666);border-radius:3px;transition:width 1.5s;}
+.shade-pct{font-family:var(--mono);font-size:9px;color:var(--yellow);width:30px;text-align:right;}
+.stat-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px;margin-bottom:6px;}
+.smc{background:var(--bg);border:1px solid var(--border2);border-radius:4px;padding:4px 6px;}
+.smc-lbl{font-size:8px;color:var(--t3);}
+.smc-val{font-family:var(--mono);font-size:12px;color:var(--blue);margin-top:1px;}
+.tank-row{display:flex;align-items:center;gap:5px;margin-bottom:3px;}
+.tank-lbl{font-size:9px;color:var(--t2);width:55px;white-space:nowrap;}
+.tank-trk{flex:1;height:9px;background:var(--border);border-radius:3px;overflow:hidden;}
+.tank-fill{height:100%;border-radius:3px;transition:width .8s;}
+.tf-water{background:linear-gradient(90deg,#0077b6,#0096c7);}
+.tf-n{background:linear-gradient(90deg,#135200,#52c41a);}
+.tf-p{background:linear-gradient(90deg,#531dab,#b37feb);}
+.tf-k{background:linear-gradient(90deg,#d46b08,#ffa940);}
+.tf-low{animation:tkpulse 1s ease-in-out infinite;}
+@keyframes tkpulse{0%,100%{opacity:1}50%{opacity:.45}}
+.tank-pct{font-family:var(--mono);font-size:9px;width:28px;text-align:right;}
+.tank-pct.ok{color:var(--t2);}
+.tank-pct.low{color:var(--red);}
+
+/* GREENHOUSE */
+.ghpanel{height:100%;background:var(--panel);border:1px solid var(--border);border-radius:8px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--sh2);position:relative;}
+.ghbar{padding:5px 12px;border-bottom:1px solid var(--border2);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;background:linear-gradient(90deg,#f6fbff,#fff);}
+.ghtitle{font-size:10px;font-weight:600;color:var(--blue4);letter-spacing:.5px;}
+.ghbtns{display:flex;gap:5px;}
+.ghbtn{font-size:10px;padding:3px 11px;border:1px solid var(--border);border-radius:12px;background:var(--panel);color:var(--t2);cursor:pointer;transition:all .2s;}
+.ghbtn:hover{border-color:var(--blue);color:var(--blue);}
+.ghbtn.active{background:var(--blue3);border-color:var(--blue2);color:var(--blue);font-weight:700;}
+.ghbtn.warnb{border-color:#ffa39e;color:var(--red);}
+.alert-overlay{position:absolute;inset:0;border-radius:8px;pointer-events:none;z-index:10;border:2px solid transparent;transition:border-color .5s;}
+.alert-overlay.active{border-color:var(--red);animation:fralrt 2s ease-in-out infinite;}
+@keyframes fralrt{0%,100%{box-shadow:inset 0 0 40px rgba(255,77,79,.08)}50%{box-shadow:inset 0 0 80px rgba(255,77,79,.18)}}
+.ghbanner{position:absolute;bottom:10px;left:50%;transform:translateX(-50%);font-size:10px;letter-spacing:1.5px;padding:3px 14px;border-radius:10px;pointer-events:none;z-index:5;white-space:nowrap;transition:all .4s;}
+.ghbanner.normal{background:var(--green2);border:1px solid var(--green3);color:#237804;}
+.ghbanner.warn{background:var(--red2);border:1px solid var(--red3);color:var(--red);}
+.ghbanner.exec{background:var(--blue3);border:1px solid #91caff;color:var(--blue);}
+
+/* Responsive: narrow screens stack vertically */
+@media(max-width:1400px){
+  .toprow{grid-template-columns:1fr 1fr;grid-template-rows:1fr 1fr;}
+  #ep{grid-column:1/-1;}
+  .botrow{min-height:200px;}
+}
+@media(max-width:900px){
+  .toprow{grid-template-columns:1fr;grid-template-rows:auto auto auto;}
+  .botrow{min-height:180px;}
+  header{height:auto;flex-wrap:wrap;padding:4px 8px;}
+  .hgrowth{position:static;transform:none;margin:4px 0;}
+}
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hbrand">
+    <div class="hlogo">🌱</div>
+    <div><div class="htitle">耘仓温室精准种植智能管控系统</div><div class="hsub">YUNCANG GREENHOUSE AI SYSTEM v5.0 · 小番茄 · 蓝莓预留 · DeepSeek ALL-CYCLE</div></div>
+  </div>
+  <div class="hgrowth">
+    <div class="gstage">育苗期</div><span class="garrow">›</span>
+    <div class="gstage">定植期</div><span class="garrow">›</span>
+    <div class="gstage">营养生长</div><span class="garrow">›</span>
+    <div class="gstage cur">⭐ 定植后D23 · 开花初期</div><span class="garrow">›</span>
+    <div class="gstage">坐果期</div><span class="garrow">›</span>
+    <div class="gstage">持续采收</div>
+  </div>
+  <div class="hmeta">
+    <div id="h-btn-wrap" style="display:flex;align-items:center;gap:8px;">
+      <button id="btn-start" class="ghbtn active" style="background:var(--green2);border-color:var(--green3);color:#237804;font-size:10px;padding:2px 10px;" onclick="sysStart()">▶ 启动</button>
+      <button id="btn-stop" class="ghbtn" style="background:var(--red2);border-color:var(--red3);color:var(--red);font-size:10px;padding:2px 10px;display:none;" onclick="sysStop()">⏹ 停止</button>
+    </div>
+    <div class="hstat"><div class="pulse" id="sys-pulse"></div><span id="sys-status">就绪</span></div>
+    <div class="hstat" id="replay-progress-hd" style="font-family:var(--mono);font-size:11px;color:#fff;">0/120</div>
+    <div id="clk" style="font-family:var(--mono);font-size:13px;color:#fff;">--:--:--</div><span style="font-size:8px;color:rgba(255,255,255,.4);margin-left:6px;">品种:小番茄 | 蓝莓</span>
+  </div>
+</header>
+<div class="main">
+  <div class="toprow">
+
+    <!-- 传感器面板 2x2 -->
+    <div class="panel" id="sp">
+      <div class="ph">
+        <div class="pt"><div class="ptbar"></div>传感器实时数据</div>
+        <div class="pbadge ok" id="sp-badge">全部正常</div>
+      </div>
+      <div class="pb-body">
+        <div class="sp-top-bar">
+          <div class="tw-bar">
+            <span class="tw-lbl">窗口</span>
+            <button class="tw-btn active" onclick="setTW('10m')">10分</button>
+            <button class="tw-btn" onclick="setTW('20m')">20分</button>
+            <button class="tw-btn" onclick="setTW('1h')">1时</button>
+            <button class="tw-btn" onclick="setTW('6h')">6时</button>
+            <button class="tw-btn" onclick="setTW('12h')">12时</button>
+            <button class="tw-btn" onclick="setTW('24h')">24时</button>
+            <button class="tw-btn" onclick="setTW('48h')">48时</button>
+          </div>
+          <div class="sp-sample-info">采样 <span id="last-sample-time">--:--:--</span> · VPD <span id="vpd-disp" style="color:#1677ff;font-family:var(--mono)">--</span>kPa · DLI <span id="dli-disp" style="color:#13c2c2;font-family:var(--mono)">--</span></div>
+        </div>
+        <div class="charts-grid">
+          <div class="chart-cell">
+            <div class="chart-cell-hd"><span class="badge-grp">ENV</span>🌡️ 环境参数</div>
+            <div class="chart-legend" id="leg-env"></div>
+            <div class="chart-container" id="chart-env"></div>
+          </div>
+          <div class="chart-cell">
+            <div class="chart-cell-hd"><span class="badge-grp">CROP</span>🌿 作物生理</div>
+            <div class="chart-legend" id="leg-crop"></div>
+            <div class="chart-container" id="chart-crop"></div>
+          </div>
+          <div class="chart-cell">
+            <div class="chart-cell-hd"><span class="badge-grp">SUB</span>🪨 基质监测</div>
+            <div class="chart-legend" id="leg-sub"></div>
+            <div class="chart-container" id="chart-sub"></div>
+          </div>
+          <div class="chart-cell">
+            <div class="chart-cell-hd"><span class="badge-grp">IRR</span>💧 灌溉水肥</div>
+            <div class="chart-legend" id="leg-irr"></div>
+            <div class="chart-container" id="chart-irr"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI调度中心 -->
+    <div class="panel" id="ap">
+      <div class="ph">
+        <div class="pt"><div class="ptbar"></div>种植大模型调度中心</div>
+        <div class="pbadge" id="ai-badge">DeepSeek</div><select id="variety-select" style="font-size:8px;padding:1px 3px;border:1px solid #dce8f8;border-radius:4px;background:#f6fbff;color:#4a6080;cursor:pointer;" onchange="switchVariety(this.value)" title="品种切换（Demo预留）"><option value="cherry" selected>🍅 小番茄</option><option value="blueberry" disabled>🫐 蓝莓（敬请期待）</option></select>
+      </div>
+      <div class="ai-cyc-bar">
+        <div class="ai-mode-pill aim-normal" id="ai-mode-pill">✅ 正常监测</div>
+        <div class="ai-cyc-prog"><div class="ai-cyc-prog-fill" id="aicyc-fill" style="width:100%"></div></div>
+        <div class="ai-cyc-num" id="aicyc-num">15</div>
+        <span style="font-size:9px;color:var(--t3)">s</span>
+        <div class="ai-inf-row">
+          <span>耗时 <span id="ai-time" style="color:var(--blue);font-family:var(--mono)">--</span>s</span>
+          <span>置信 <span id="ai-conf" style="color:var(--blue);font-family:var(--mono)">--</span></span>
+          <span>本次 <span id="ai-tokens" style="color:var(--cyan);font-family:var(--mono)">--</span>tk</span>
+          <span>累计 <span id="ai-total-tokens" style="color:var(--t2);font-family:var(--mono)">0</span>tk</span>
+        </div>
+      </div>
+      <div class="pb-body">
+        <!-- 推理日志终端 -->
+        <div class="ai-log-wrap">
+          <div class="ai-log-hd">
+            <span>📟 推理日志 · DeepSeek实时输出</span>
+            <button class="log-copy-btn" onclick="copyLog()">复制日志</button>
+          </div>
+          <div class="ai-log" id="ai-log"></div>
+        </div>
+        <!-- 透明覆盖弹窗 -->
+        <div class="ai-anomaly-box" id="ai-anomaly-box">
+          <div class="ai-atitle" id="ai-anomaly-title">⚠️ 检测到异常</div>
+          <div class="ai-atags" id="ai-anomaly-tags"></div>
+        </div>
+        <div class="ai-routine-box" id="ai-routine-box">
+          <div class="ai-rtitle">📋 例行巡检建议</div>
+          <div class="adv-list" id="adv-list-routine"></div>
+        </div>
+        <div class="aist-box" id="ai-advice-box">
+          <div class="aist-title">
+            <span>🚨 AI紧急调控方案</span>
+            <span id="ai-eta-text" style="font-size:9px;color:var(--t3)"></span>
+          </div>
+          <div class="adv-list" id="adv-list"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 执行机构 -->
+    <div class="panel" id="ep">
+      <div class="ph">
+        <div class="pt"><div class="ptbar"></div>执行机构状态</div>
+        <div class="pbadge">实时监控</div>
+      </div>
+      <div class="pb-body">
+        <div class="ep-sec-hd">🌬️ 通风风机</div>
+        <div class="fan-widget">
+          <div class="fan-svg-wrap"><svg viewBox="-20 -20 40 40" width="40" height="40"><circle r="18" fill="#e6f0ff" stroke="#1677ff" stroke-width="1.5"/><g id="fan1-blades"><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#1677ff" transform="rotate(0)"/><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#1677ff" transform="rotate(120)"/><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#1677ff" transform="rotate(240)"/></g><circle r="4.5" fill="#0958d9"/><circle r="2" fill="white"/></svg></div>
+          <div class="fan-meta"><div class="fan-row1"><span class="fan-name">1号风机 F1</span><span class="fan-watt" id="fw1">1.2kW</span><span class="fan-badge on" id="fs1">运行</span></div><div class="fan-prog-wrap"><div class="fan-prog" id="fp1" style="width:85%"></div></div></div>
+        </div>
+        <div class="fan-widget">
+          <div class="fan-svg-wrap"><svg viewBox="-20 -20 40 40" width="40" height="40"><circle r="18" fill="#f5f5f5" stroke="#d0d8e8" stroke-width="1.5" id="fan2-housing"/><g id="fan2-blades"><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#b0b8c8" transform="rotate(0)"/><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#b0b8c8" transform="rotate(120)"/><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#b0b8c8" transform="rotate(240)"/></g><circle r="4.5" fill="#8090a8"/><circle r="2" fill="white"/></svg></div>
+          <div class="fan-meta"><div class="fan-row1"><span class="fan-name">2号风机 F2</span><span class="fan-watt" id="fw2" style="color:var(--t3)">待机</span><span class="fan-badge off" id="fs2">待机</span></div><div class="fan-prog-wrap"><div class="fan-prog" id="fp2" style="width:0%"></div></div></div>
+        </div>
+        <div class="fan-widget">
+          <div class="fan-svg-wrap"><svg viewBox="-20 -20 40 40" width="40" height="40"><circle r="18" fill="#e6f0ff" stroke="#1677ff" stroke-width="1.5"/><g id="fan3-blades"><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#1677ff" transform="rotate(0)"/><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#1677ff" transform="rotate(120)"/><path d="M 0,-1 Q -5,-9 0,-17 Q 5,-9 0,-1 Z" fill="#1677ff" transform="rotate(240)"/></g><circle r="4.5" fill="#0958d9"/><circle r="2" fill="white"/></svg></div>
+          <div class="fan-meta"><div class="fan-row1"><span class="fan-name">3号风机 F3</span><span class="fan-watt" id="fw3">1.4kW</span><span class="fan-badge on" id="fs3">运行</span></div><div class="fan-prog-wrap"><div class="fan-prog" id="fp3" style="width:92%"></div></div></div>
+        </div>
+        <div style="font-size:9px;color:var(--t3);padding:1px 6px 4px;text-align:right;">今日耗电 <span id="kwh" style="color:var(--cyan);font-family:var(--mono)">18.4</span> kWh</div>
+        <div class="ep-sec-hd">🪟 遮阳帘</div>
+        <div class="shade-row"><span class="shade-lbl">东侧帘</span><div class="shade-trk"><div class="shade-fill" id="she" style="width:100%"></div></div><span class="shade-pct" id="shep">100%</span></div>
+        <div class="shade-row"><span class="shade-lbl">中部帘</span><div class="shade-trk"><div class="shade-fill" id="shm" style="width:50%"></div></div><span class="shade-pct" id="shmp">50%</span></div>
+        <div class="shade-row"><span class="shade-lbl">西侧帘</span><div class="shade-trk"><div class="shade-fill" id="shw" style="width:0%"></div></div><span class="shade-pct" id="shwp">0%</span></div>
+        <div class="ep-sec-hd" style="margin-top:3px;">💧 水肥施用</div>
+        <div class="stat-mini-grid">
+          <div class="smc"><div class="smc-lbl">本次施用</div><div class="smc-val" id="irr-now">2.4L</div></div>
+          <div class="smc"><div class="smc-lbl">供液EC</div><div class="smc-val" id="sup-ec-disp">2.5</div></div>
+          <div class="smc"><div class="smc-lbl">回液率</div><div class="smc-val" id="drain-disp">28%</div></div>
+          <div class="smc"><div class="smc-lbl">今日累计</div><div class="smc-val">14.8L</div></div>
+        </div>
+        <div class="ep-sec-hd">🧪 罐体余量</div>
+        <div class="tank-row"><span class="tank-lbl">💧 清水罐</span><div class="tank-trk"><div class="tank-fill tf-water" style="width:82%"></div></div><span class="tank-pct ok">82%</span></div>
+        <div class="tank-row"><span class="tank-lbl">🟢 氮肥N</span><div class="tank-trk"><div class="tank-fill tf-n" style="width:41%"></div></div><span class="tank-pct ok">41%</span></div>
+        <div class="tank-row"><span class="tank-lbl">🟣 磷肥P</span><div class="tank-trk"><div class="tank-fill tf-p" style="width:63%"></div></div><span class="tank-pct ok">63%</span></div>
+        <div class="tank-row"><span class="tank-lbl">🟠 钾肥K</span><div class="tank-trk"><div class="tank-fill tf-k tf-low" style="width:28%"></div></div><span class="tank-pct low">28%⚠</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="botrow">
+    <div class="ghpanel">
+      <div class="ghbar">
+        <div class="ghtitle">🏗️ 数字孪生温室 · 连栋Venlo · 3跨9峰 · 高架椰糠基质栽培 · 小番茄定植后D23 · 开花初期</div>
+        <div class="ghbtns">
+          <button class="ghbtn active" id="gbn" onclick="jumpToNormal()">✅ 正常段</button>
+          <button class="ghbtn warnb" id="gba" onclick="jumpToAnomaly()">⚠ 跳转异常</button>
+          <button class="ghbtn" onclick="exportCSV()" style="border-color:#722ed1;color:#722ed1;font-size:9px">📥 导出CSV</button>
+        </div>
+      </div>
+
+      <svg id="ghsvg" viewBox="0 0 1520 288" preserveAspectRatio="xMidYMid meet" style="flex:1;width:100%;height:100%">
+<defs>
+<linearGradient id="gSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c4e4f8"/><stop offset="55%" stop-color="#ddf0fc"/><stop offset="100%" stop-color="#eef8ff"/></linearGradient>
+<linearGradient id="gFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8d4be"/><stop offset="100%" stop-color="#a8b898"/></linearGradient>
+<linearGradient id="gIntFloor" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#d4e0d4"/><stop offset="100%" stop-color="#b8c8b0"/></linearGradient>
+<linearGradient id="gSubstrate" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#7a5030"/><stop offset="100%" stop-color="#4a2810"/></linearGradient>
+<linearGradient id="gTankBlue" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#0958d9"/><stop offset="60%" stop-color="#1677ff"/><stop offset="100%" stop-color="#69b1ff"/></linearGradient>
+<linearGradient id="gTankGreen" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#135200"/><stop offset="60%" stop-color="#237804"/><stop offset="100%" stop-color="#52c41a"/></linearGradient>
+<linearGradient id="gMetal" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c8d8e8"/><stop offset="50%" stop-color="#a0b8c8"/><stop offset="100%" stop-color="#88a0b8"/></linearGradient>
+<radialGradient id="gHeat1" cx="50%" cy="50%" r="50%"><stop id="h1a" offset="20%" stop-color="#ff4d4f" stop-opacity="0"/><stop id="h1b" offset="100%" stop-color="#ff4d4f" stop-opacity="0"/></radialGradient>
+<radialGradient id="gHeat2" cx="50%" cy="50%" r="50%"><stop id="h2a" offset="20%" stop-color="#ff4d4f" stop-opacity="0"/><stop id="h2b" offset="100%" stop-color="#ff4d4f" stop-opacity="0"/></radialGradient>
+<radialGradient id="gHeat3" cx="50%" cy="50%" r="50%"><stop id="h3a" offset="20%" stop-color="#ff4d4f" stop-opacity="0"/><stop id="h3b" offset="100%" stop-color="#ff4d4f" stop-opacity="0"/></radialGradient>
+<filter id="fLED" x="-15%" y="-100%" width="130%" height="400%"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="fGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+<filter id="fShadow"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#00000018"/></filter>
+</defs>
+<rect width="1520" height="288" fill="url(#gSky)"/>
+<rect x="0" y="255" width="1520" height="33" fill="url(#gFloor)"/>
+<rect x="60" y="243" width="1280" height="14" fill="url(#gIntFloor)"/>
+<rect id="temp-overlay" x="60" y="98" width="1280" height="157" fill="rgba(255,60,0,0)" style="pointer-events:none;transition:fill 1s;"/>
+<ellipse class="heatzone" id="hz1" cx="275" cy="160" rx="210" ry="75" fill="url(#gHeat1)" opacity="0"/>
+<ellipse class="heatzone" id="hz2" cx="703" cy="160" rx="210" ry="75" fill="url(#gHeat2)" opacity="0"/>
+<ellipse class="heatzone" id="hz3" cx="1128" cy="160" rx="210" ry="75" fill="url(#gHeat3)" opacity="0"/>
+<polygon points="60,98 131,35 203,98 203,255 60,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="203,98 274,35 346,98 346,255 203,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="346,98 417,35 489,98 489,255 346,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="489,98 560,35 632,98 632,255 489,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="632,98 703,35 775,98 775,255 632,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="775,98 846,35 918,98 918,255 775,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="918,98 989,35 1061,98 1061,255 918,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="1061,98 1132,35 1204,98 1204,255 1061,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<polygon points="1204,98 1272,35 1340,98 1340,255 1204,255" fill="rgba(200,230,255,0.05)" stroke="none"/>
+<line id="co2-pipe" x1="72" y1="103" x2="72" y2="237" stroke="#5a8a5a" stroke-width="3" opacity="0.65"/>
+<line id="co2-flow" x1="72" y1="237" x2="72" y2="103" stroke="#82c041" stroke-width="1.8" stroke-dasharray="6,5" opacity="0"><animate attributeName="stroke-dashoffset" from="0" to="-110" dur="1.2s" repeatCount="indefinite"/></line>
+<line x1="72" y1="130" x2="88" y2="130" stroke="#5a8a5a" stroke-width="1.2" opacity="0.6"/>
+<circle cx="88" cy="130" r="2" fill="#6a9a6a" opacity="0.6"/>
+<line x1="72" y1="155" x2="88" y2="155" stroke="#5a8a5a" stroke-width="1.2" opacity="0.6"/>
+<circle cx="88" cy="155" r="2" fill="#6a9a6a" opacity="0.6"/>
+<line x1="72" y1="180" x2="88" y2="180" stroke="#5a8a5a" stroke-width="1.2" opacity="0.6"/>
+<circle cx="88" cy="180" r="2" fill="#6a9a6a" opacity="0.6"/>
+<line x1="72" y1="210" x2="88" y2="210" stroke="#5a8a5a" stroke-width="1.2" opacity="0.6"/>
+<circle cx="88" cy="210" r="2" fill="#6a9a6a" opacity="0.6"/>
+<text x="68" y="112" text-anchor="middle" font-size="6" fill="#5a8a5a" font-family="monospace" transform="rotate(-90,68,112)">CO₂</text>
+<rect x="80" y="214" width="389" height="14" rx="2" fill="url(#gMetal)" filter="url(#fShadow)"/>
+<rect x="82" y="204" width="385" height="13" rx="1" fill="url(#gSubstrate)"/>
+<line x1="92" y1="204" x2="101" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="120" y1="204" x2="129" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="148" y1="204" x2="157" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="176" y1="204" x2="185" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="204" y1="204" x2="213" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="232" y1="204" x2="241" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="260" y1="204" x2="269" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="288" y1="204" x2="297" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="316" y1="204" x2="325" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="344" y1="204" x2="353" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="372" y1="204" x2="381" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="400" y1="204" x2="409" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="428" y1="204" x2="437" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="456" y1="204" x2="465" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="80" y1="228" x2="80" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="177" y1="228" x2="177" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="274" y1="228" x2="274" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="371" y1="228" x2="371" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="468" y1="228" x2="468" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<rect x="85" y="190" width="379" height="4" rx="2" fill="#ffc8e0" filter="url(#fLED)" opacity="0.88"/>
+<rect x="509" y="214" width="389" height="14" rx="2" fill="url(#gMetal)" filter="url(#fShadow)"/>
+<rect x="511" y="204" width="385" height="13" rx="1" fill="url(#gSubstrate)"/>
+<line x1="521" y1="204" x2="530" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="549" y1="204" x2="558" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="577" y1="204" x2="586" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="605" y1="204" x2="614" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="633" y1="204" x2="642" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="661" y1="204" x2="670" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="689" y1="204" x2="698" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="717" y1="204" x2="726" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="745" y1="204" x2="754" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="773" y1="204" x2="782" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="801" y1="204" x2="810" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="829" y1="204" x2="838" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="857" y1="204" x2="866" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="885" y1="204" x2="894" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="509" y1="228" x2="509" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="606" y1="228" x2="606" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="703" y1="228" x2="703" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="800" y1="228" x2="800" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="897" y1="228" x2="897" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<rect x="514" y="190" width="379" height="4" rx="2" fill="#ffc8e0" filter="url(#fLED)" opacity="0.88"/>
+<rect x="938" y="214" width="382" height="14" rx="2" fill="url(#gMetal)" filter="url(#fShadow)"/>
+<rect x="940" y="204" width="378" height="13" rx="1" fill="url(#gSubstrate)"/>
+<line x1="950" y1="204" x2="959" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="978" y1="204" x2="987" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1006" y1="204" x2="1015" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1034" y1="204" x2="1043" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1062" y1="204" x2="1071" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1090" y1="204" x2="1099" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1118" y1="204" x2="1127" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1146" y1="204" x2="1155" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1174" y1="204" x2="1183" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1202" y1="204" x2="1211" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1230" y1="204" x2="1239" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1258" y1="204" x2="1267" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="1286" y1="204" x2="1295" y2="204" stroke="#2a1005" stroke-width="0.5" opacity="0.5"/>
+<line x1="938" y1="228" x2="938" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="1033" y1="228" x2="1033" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="1128" y1="228" x2="1128" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="1223" y1="228" x2="1223" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<line x1="1318" y1="228" x2="1318" y2="255" stroke="#9ab0a0" stroke-width="1.4"/>
+<rect x="943" y="190" width="372" height="4" rx="2" fill="#ffc8e0" filter="url(#fLED)" opacity="0.88"/>
+<g id="co2-bubbles"></g>
+<line x1="60" y1="250" x2="1340" y2="250" stroke="#2266aa" stroke-width="3.5"/>
+<line x1="131" y1="250" x2="131" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="274" y1="250" x2="274" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="417" y1="250" x2="417" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="560" y1="250" x2="560" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="703" y1="250" x2="703" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="846" y1="250" x2="846" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="989" y1="250" x2="989" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="1132" y1="250" x2="1132" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<line x1="1272" y1="250" x2="1272" y2="228" stroke="#4488bb" stroke-width="1.5"/>
+<circle cx="60" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="203" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="346" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="489" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="632" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="775" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="918" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="1061" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="1204" cy="250" r="3.5" fill="#1a5080"/>
+<circle cx="1340" cy="250" r="3.5" fill="#1a5080"/>
+<g id="pipe-pulses"></g>
+<g id="water-drops" opacity="0">
+<circle cx="131" cy="214" r="2.5" fill="#4499dd"><animate attributeName="cy" from="214" to="245" dur="1.4s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.9" to="0" dur="1.4s" repeatCount="indefinite"/></circle>
+<circle cx="560" cy="214" r="2.5" fill="#4499dd"><animate attributeName="cy" from="214" to="245" dur="1.4s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.9" to="0" dur="1.4s" repeatCount="indefinite"/></circle>
+<circle cx="989" cy="214" r="2.5" fill="#4499dd"><animate attributeName="cy" from="214" to="245" dur="1.4s" repeatCount="indefinite"/><animate attributeName="opacity" from="0.9" to="0" dur="1.4s" repeatCount="indefinite"/></circle>
+</g>
+<g id="airflow-anim" opacity="0">
+<line x1="70" y1="115" x2="1330" y2="115" stroke="#40a9ff" stroke-width="1.2" stroke-dasharray="14,7" opacity="0.3"><animate attributeName="stroke-dashoffset" from="0" to="-126" dur="1.5s" repeatCount="indefinite"/></line>
+<line x1="70" y1="150" x2="1330" y2="150" stroke="#40a9ff" stroke-width="1.2" stroke-dasharray="14,7" opacity="0.3"><animate attributeName="stroke-dashoffset" from="0" to="-126" dur="1.5s" repeatCount="indefinite"/></line>
+<line x1="70" y1="188" x2="1330" y2="188" stroke="#40a9ff" stroke-width="1.2" stroke-dasharray="14,7" opacity="0.3"><animate attributeName="stroke-dashoffset" from="0" to="-126" dur="1.5s" repeatCount="indefinite"/></line>
+</g>
+<line id="stripe-shd-e-0" x1="62" y1="99.0" x2="62" y2="99.0" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-e-1" x1="62" y1="100.2" x2="62" y2="100.2" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-e-2" x1="62" y1="101.4" x2="62" y2="101.4" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-e-3" x1="62" y1="102.6" x2="62" y2="102.6" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<rect id="shd-e" x="62" y="98" width="0" height="6" rx="2" fill="#faad14" opacity="0.9"/>
+<line id="stripe-shd-m-0" x1="491" y1="99.0" x2="491" y2="99.0" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-m-1" x1="491" y1="100.2" x2="491" y2="100.2" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-m-2" x1="491" y1="101.4" x2="491" y2="101.4" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-m-3" x1="491" y1="102.6" x2="491" y2="102.6" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<rect id="shd-m" x="491" y="98" width="0" height="6" rx="2" fill="#faad14" opacity="0.9"/>
+<line id="stripe-shd-w-0" x1="920" y1="99.0" x2="920" y2="99.0" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-w-1" x1="920" y1="100.2" x2="920" y2="100.2" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-w-2" x1="920" y1="101.4" x2="920" y2="101.4" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<line id="stripe-shd-w-3" x1="920" y1="102.6" x2="920" y2="102.6" stroke="rgba(0,0,0,0.12)" stroke-width="0.6"/>
+<rect id="shd-w" x="920" y="98" width="0" height="6" rx="2" fill="#faad14" opacity="0.9"/>
+<line x1="60" y1="98" x2="60" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="203" y1="98" x2="203" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="346" y1="98" x2="346" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="489" y1="98" x2="489" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="632" y1="98" x2="632" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="775" y1="98" x2="775" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="918" y1="98" x2="918" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="1061" y1="98" x2="1061" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="1204" y1="98" x2="1204" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="1340" y1="98" x2="1340" y2="255" stroke="#6888a0" stroke-width="2.5"/>
+<line x1="60" y1="98" x2="1340" y2="98" stroke="#7090a8" stroke-width="2.5"/>
+<line x1="60" y1="98" x2="131" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="131" y1="35" x2="203" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="95" y1="66" x2="60" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="167" y1="66" x2="203" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="123" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent0" x="109" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="203" y1="98" x2="274" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="274" y1="35" x2="346" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="238" y1="66" x2="203" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="310" y1="66" x2="346" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="266" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent1" x="252" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="346" y1="98" x2="417" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="417" y1="35" x2="489" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="381" y1="66" x2="346" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="453" y1="66" x2="489" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="409" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent2" x="395" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="489" y1="98" x2="560" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="560" y1="35" x2="632" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="524" y1="66" x2="489" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="596" y1="66" x2="632" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="552" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent3" x="538" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="632" y1="98" x2="703" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="703" y1="35" x2="775" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="667" y1="66" x2="632" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="739" y1="66" x2="775" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="695" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent4" x="681" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="775" y1="98" x2="846" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="846" y1="35" x2="918" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="810" y1="66" x2="775" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="882" y1="66" x2="918" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="838" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent5" x="824" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="918" y1="98" x2="989" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="989" y1="35" x2="1061" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="953" y1="66" x2="918" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="1025" y1="66" x2="1061" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="981" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent6" x="967" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="1061" y1="98" x2="1132" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="1132" y1="35" x2="1204" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="1096" y1="66" x2="1061" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="1168" y1="66" x2="1204" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="1124" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent7" x="1110" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="1204" y1="98" x2="1272" y2="35" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="1272" y1="35" x2="1340" y2="98" stroke="#8aa8c0" stroke-width="2"/>
+<line x1="1238" y1="66" x2="1204" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<line x1="1306" y1="66" x2="1340" y2="98" stroke="#b0c8d8" stroke-width="0.7" opacity="0.5"/>
+<rect x="1264" y="33" width="16" height="5" rx="2" fill="#5888a8"/>
+<rect class="vent-win" id="vent8" x="1250" y="37" width="44" height="5" rx="1" fill="#a8d0e8" stroke="#7090b0" stroke-width="0.6" opacity="0.7"/>
+<line x1="131" y1="34" x2="1272" y2="34" stroke="#8aa8c0" stroke-width="1.2" opacity="0.4"/>
+<rect x="198" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<rect x="341" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<rect x="484" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<rect x="627" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<rect x="770" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<rect x="913" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<rect x="1056" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<rect x="1199" y="93" width="10" height="7" rx="1" fill="#5888a8"/>
+<line x1="60" y1="140" x2="1340" y2="140" stroke="#b0c8d8" stroke-width="0.8" opacity="0.35"/>
+<line x1="60" y1="175" x2="1340" y2="175" stroke="#b0c8d8" stroke-width="0.8" opacity="0.35"/>
+<line x1="60" y1="210" x2="1340" y2="210" stroke="#b0c8d8" stroke-width="0.8" opacity="0.35"/>
+<rect x="58" y="253" width="1284" height="3" fill="#6888a0"/>
+<!-- Plant container: must be after structural framework for correct z-order -->
+<g id="plant-container"></g>
+<g id="gh-fan-F1" transform="translate(60,148)"><circle r="19" fill="#e8f4ff" stroke="#8ab0d0" stroke-width="1.2"/><circle r="19" fill="none" stroke="#a8c8e0" stroke-width="0.4" stroke-dasharray="2,3"/><g class="gh-fan-blades" id="ghfb-F1"><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(0)"/><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(120)"/><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(240)"/></g><circle r="4" fill="#1a5099"/><rect x="-13" y="22" width="26" height="11" rx="2" fill="#1677ff"/><text x="0" y="30" text-anchor="middle" font-size="7" fill="white" font-family="monospace" font-weight="bold">F1</text></g>
+<g id="gh-fan-F2" transform="translate(703,148)"><circle r="19" fill="#e8f4ff" stroke="#8ab0d0" stroke-width="1.2"/><circle r="19" fill="none" stroke="#a8c8e0" stroke-width="0.4" stroke-dasharray="2,3"/><g class="gh-fan-blades" id="ghfb-F2"><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(0)"/><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(120)"/><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(240)"/></g><circle r="4" fill="#1a5099"/><rect x="-13" y="22" width="26" height="11" rx="2" fill="#1677ff"/><text x="0" y="30" text-anchor="middle" font-size="7" fill="white" font-family="monospace" font-weight="bold">F2</text></g>
+<g id="gh-fan-F3" transform="translate(1340,148)"><circle r="19" fill="#e8f4ff" stroke="#8ab0d0" stroke-width="1.2"/><circle r="19" fill="none" stroke="#a8c8e0" stroke-width="0.4" stroke-dasharray="2,3"/><g class="gh-fan-blades" id="ghfb-F3"><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(0)"/><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(120)"/><path d="M 0,-1 Q -5,-8 0,-16 Q 5,-8 0,-1 Z" fill="#4488cc" transform="rotate(240)"/></g><circle r="4" fill="#1a5099"/><rect x="-13" y="22" width="26" height="11" rx="2" fill="#1677ff"/><text x="0" y="30" text-anchor="middle" font-size="7" fill="white" font-family="monospace" font-weight="bold">F3</text></g>
+<g transform="translate(274,142)" id="snode-S1"><circle r="5" fill="#1677ff" filter="url(#fGlow)" opacity="0.8"><animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.2s" repeatCount="indefinite"/></circle><circle r="2.5" fill="white"/></g>
+<g transform="translate(703,142)" id="snode-S2"><circle r="5" fill="#1677ff" filter="url(#fGlow)" opacity="0.8"><animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.2s" repeatCount="indefinite"/></circle><circle r="2.5" fill="white"/></g>
+<g transform="translate(1132,142)" id="snode-S3"><circle r="5" fill="#1677ff" filter="url(#fGlow)" opacity="0.8"><animate attributeName="opacity" values="0.8;0.3;0.8" dur="2.2s" repeatCount="indefinite"/></circle><circle r="2.5" fill="white"/></g>
+<path d="M 1315,247 C 1370,247 1366,213 1370,193" stroke="#1a5099" stroke-width="2.5" fill="none"/>
+<path d="M 1315,237 C 1368,237 1400,203 1406,183" stroke="#1a6600" stroke-width="2" fill="none"/>
+<rect x="1363" y="155" width="34" height="92" rx="6" fill="url(#gTankBlue)" filter="url(#fShadow)"/>
+<ellipse cx="1380" cy="155" rx="17" ry="5" fill="#69b1ff"/>
+<ellipse cx="1380" cy="247" rx="17" ry="5" fill="#003eb3" opacity="0.7"/>
+<text x="1380" y="205" text-anchor="middle" font-size="10" fill="white" font-weight="bold" font-family="sans-serif">A</text>
+<text x="1380" y="261" text-anchor="middle" font-size="7" fill="#4a6080">清水罐</text>
+<rect x="1407" y="169" width="28" height="80" rx="5" fill="url(#gTankGreen)" filter="url(#fShadow)"/>
+<ellipse cx="1421" cy="169" rx="14" ry="4" fill="#95de64"/>
+<ellipse cx="1421" cy="249" rx="14" ry="4" fill="#092b00" opacity="0.7"/>
+<text x="1421" y="213" text-anchor="middle" font-size="10" fill="white" font-weight="bold" font-family="sans-serif">B</text>
+<text x="1421" y="263" text-anchor="middle" font-size="7" fill="#4a6080">营养液</text>
+<rect x="1360" y="82" width="74" height="52" rx="4" fill="#263a52" filter="url(#fShadow)"/>
+<rect x="1363" y="85" width="68" height="46" rx="2" fill="#0a1e3a"/>
+<text x="1397" y="95" text-anchor="middle" font-size="6" fill="#69b1ff" font-family="monospace">耘仓水肥控制器</text>
+<text id="scr-ec" x="1397" y="107" text-anchor="middle" font-size="7.5" fill="#52c41a" font-family="monospace">EC: 2.40 mS/cm</text>
+<text id="scr-ph" x="1397" y="120" text-anchor="middle" font-size="7.5" fill="#4096ff" font-family="monospace">pH: 6.1</text>
+<circle cx="1369" cy="129" r="2" fill="#52c41a"><animate attributeName="opacity" values="1;0.3;1" dur="1.5s" repeatCount="indefinite"/></circle>
+<rect x="1363" y="245" width="72" height="13" rx="2" fill="#364a5e"/>
+<text x="1399" y="256" text-anchor="middle" font-size="6.5" fill="#8aa8c8">水肥配比泵</text>
+<circle id="pump-led" cx="1380" cy="251" r="3" fill="#52c41a" opacity="0"><animate attributeName="opacity" values="1;0.25;1" dur="0.7s" repeatCount="indefinite"/></circle>
+<text x="760" y="282" text-anchor="middle" font-size="8" fill="#8090a0" font-family="monospace">耘仓智能×北航 · VENLO 3-SPAN 9-PEAK · HIGH-BENCH SUBSTRATE · v5.0</text>
+      </svg>
+      <div class="alert-overlay" id="alert-overlay"></div>
+      <div class="ghbanner normal" id="ghbanner">✅ 数据重放启动 · DeepSeek全周期AI管控</div>
+    </div>
+  </div>
+</div>
+<script>
+const REPLAY_DATA=[
+  {'temp':25.31,'hum':67.03,'co2':516.49,'light':31.73,'canopy':24.98,'leaf':62.33,'sap':24.28,'sub-t':22.22,'sub-w':69.84,'ec':2.55,'ph':6.05,'sup-t':20.2,'sup-ec':2.56,'drain':27.75,'flow':45.2},
+  {'temp':25.23,'hum':67.43,'co2':521.39,'light':32.3,'canopy':24.43,'leaf':62.57,'sap':24.14,'sub-t':22.39,'sub-w':69.28,'ec':2.61,'ph':6.07,'sup-t':19.95,'sup-ec':2.57,'drain':28.29,'flow':45.14},
+  {'temp':25.43,'hum':68.47,'co2':520.57,'light':32.45,'canopy':24.71,'leaf':62.1,'sap':24.24,'sub-t':22.58,'sub-w':70.76,'ec':2.59,'ph':6.14,'sup-t':19.92,'sup-ec':2.58,'drain':27.82,'flow':44.43},
+  {'temp':25.0,'hum':67.19,'co2':516.54,'light':32.13,'canopy':24.7,'leaf':61.76,'sap':23.79,'sub-t':22.34,'sub-w':70.92,'ec':2.59,'ph':6.12,'sup-t':20.0,'sup-ec':2.62,'drain':27.72,'flow':44.84},
+  {'temp':25.57,'hum':68.29,'co2':520.89,'light':32.18,'canopy':25.06,'leaf':62.51,'sap':23.8,'sub-t':22.18,'sub-w':69.61,'ec':2.56,'ph':6.05,'sup-t':20.47,'sup-ec':2.63,'drain':27.84,'flow':45.21},
+  {'temp':25.12,'hum':68.85,'co2':519.36,'light':31.77,'canopy':24.61,'leaf':62.11,'sap':23.83,'sub-t':22.56,'sub-w':70.84,'ec':2.57,'ph':6.05,'sup-t':20.5,'sup-ec':2.60,'drain':27.66,'flow':44.39},
+  {'temp':24.9,'hum':68.26,'co2':524.56,'light':31.93,'canopy':24.48,'leaf':61.78,'sap':24.36,'sub-t':22.52,'sub-w':70.99,'ec':2.61,'ph':6.01,'sup-t':20.33,'sup-ec':2.61,'drain':28.03,'flow':44.69},
+  {'temp':25.31,'hum':67.21,'co2':518.98,'light':31.96,'canopy':25.14,'leaf':62.7,'sap':23.83,'sub-t':22.5,'sub-w':69.33,'ec':2.61,'ph':6.17,'sup-t':20.08,'sup-ec':2.61,'drain':28.09,'flow':44.53},
+  {'temp':25.4,'hum':68.08,'co2':524.35,'light':32.03,'canopy':24.43,'leaf':61.67,'sap':23.65,'sub-t':22.79,'sub-w':70.8,'ec':2.60,'ph':6.06,'sup-t':19.93,'sup-ec':2.63,'drain':28.38,'flow':44.44},
+  {'temp':25.19,'hum':67.12,'co2':524.07,'light':32.26,'canopy':24.52,'leaf':61.95,'sap':24.04,'sub-t':22.34,'sub-w':70.78,'ec':2.57,'ph':6.05,'sup-t':20.22,'sup-ec':2.62,'drain':27.75,'flow':44.75},
+  {'temp':25.57,'hum':68.31,'co2':519.03,'light':32.02,'canopy':24.52,'leaf':61.49,'sap':23.88,'sub-t':22.56,'sub-w':69.43,'ec':2.56,'ph':6.02,'sup-t':20.28,'sup-ec':2.58,'drain':28.34,'flow':45.49},
+  {'temp':24.88,'hum':67.47,'co2':522.64,'light':31.73,'canopy':24.53,'leaf':62.81,'sap':24.05,'sub-t':22.48,'sub-w':70.6,'ec':2.60,'ph':6.04,'sup-t':19.96,'sup-ec':2.59,'drain':27.94,'flow':44.96},
+  {'temp':25.37,'hum':68.35,'co2':527.55,'light':31.61,'canopy':24.73,'leaf':61.7,'sap':24.26,'sub-t':22.33,'sub-w':69.35,'ec':2.58,'ph':6.09,'sup-t':20.07,'sup-ec':2.58,'drain':28.36,'flow':44.92},
+  {'temp':25.47,'hum':68.1,'co2':512.99,'light':32.48,'canopy':25.05,'leaf':62.87,'sap':24.31,'sub-t':22.74,'sub-w':69.3,'ec':2.58,'ph':6.05,'sup-t':20.14,'sup-ec':2.57,'drain':27.9,'flow':45.66},
+  {'temp':25.02,'hum':68.58,'co2':519.3,'light':31.93,'canopy':25.14,'leaf':62.92,'sap':24.04,'sub-t':22.65,'sub-w':69.28,'ec':2.57,'ph':6.19,'sup-t':20.25,'sup-ec':2.60,'drain':28.21,'flow':44.4},
+  {'temp':25.26,'hum':68.01,'co2':525.5,'light':31.67,'canopy':25.14,'leaf':61.22,'sap':23.77,'sub-t':22.56,'sub-w':70.37,'ec':2.56,'ph':6.03,'sup-t':20.44,'sup-ec':2.58,'drain':28.08,'flow':45.16},
+  {'temp':25.14,'hum':68.17,'co2':520.36,'light':32.42,'canopy':24.58,'leaf':62.4,'sap':23.81,'sub-t':22.43,'sub-w':70.36,'ec':2.57,'ph':6.07,'sup-t':20.35,'sup-ec':2.57,'drain':27.96,'flow':45.67},
+  {'temp':25.58,'hum':67.13,'co2':515.53,'light':31.77,'canopy':25.12,'leaf':62.71,'sap':24.27,'sub-t':22.41,'sub-w':69.28,'ec':2.60,'ph':6.14,'sup-t':20.27,'sup-ec':2.64,'drain':28.13,'flow':44.34},
+  {'temp':25.93,'hum':66.83,'co2':520.01,'light':32.02,'canopy':25.43,'leaf':61.4,'sap':24.9,'sub-t':22.5,'sub-w':69.99,'ec':2.58,'ph':6.11,'sup-t':20.19,'sup-ec':2.61,'drain':27.99,'flow':45.0},
+  {'temp':26.65,'hum':65.68,'co2':519.98,'light':32.0,'canopy':26.07,'leaf':60.81,'sap':25.84,'sub-t':22.51,'sub-w':69.99,'ec':2.59,'ph':6.1,'sup-t':20.2,'sup-ec':2.58,'drain':27.98,'flow':45.02},
+  {'temp':27.37,'hum':64.5,'co2':520.01,'light':32.0,'canopy':26.71,'leaf':60.24,'sap':26.74,'sub-t':22.52,'sub-w':70.01,'ec':2.59,'ph':6.12,'sup-t':20.19,'sup-ec':2.59,'drain':27.98,'flow':45.01},
+  {'temp':28.08,'hum':63.33,'co2':520.0,'light':31.99,'canopy':27.38,'leaf':59.68,'sap':27.69,'sub-t':22.51,'sub-w':70.02,'ec':2.56,'ph':6.11,'sup-t':20.19,'sup-ec':2.62,'drain':28.01,'flow':45.01},
+  {'temp':28.8,'hum':62.16,'co2':520.01,'light':31.98,'canopy':28.02,'leaf':59.1,'sap':28.57,'sub-t':22.51,'sub-w':70.0,'ec':2.57,'ph':6.11,'sup-t':20.19,'sup-ec':2.58,'drain':27.99,'flow':44.99},
+  {'temp':29.51,'hum':61.02,'co2':519.99,'light':32.01,'canopy':28.65,'leaf':58.52,'sap':29.5,'sub-t':22.52,'sub-w':69.98,'ec':2.60,'ph':6.09,'sup-t':20.22,'sup-ec':2.59,'drain':27.98,'flow':45.0},
+  {'temp':30.23,'hum':59.83,'co2':520.0,'light':32.0,'canopy':29.29,'leaf':57.92,'sap':30.41,'sub-t':22.51,'sub-w':69.98,'ec':2.60,'ph':6.1,'sup-t':20.21,'sup-ec':2.61,'drain':28.01,'flow':44.99},
+  {'temp':30.92,'hum':58.67,'co2':519.99,'light':31.99,'canopy':29.95,'leaf':57.34,'sap':31.33,'sub-t':22.49,'sub-w':70.0,'ec':2.58,'ph':6.09,'sup-t':20.19,'sup-ec':2.60,'drain':28.02,'flow':45.01},
+  {'temp':31.67,'hum':57.5,'co2':519.99,'light':32.0,'canopy':30.56,'leaf':56.74,'sap':32.25,'sub-t':22.5,'sub-w':70.01,'ec':2.58,'ph':6.1,'sup-t':20.19,'sup-ec':2.60,'drain':28.02,'flow':45.01},
+  {'temp':32.35,'hum':56.32,'co2':520.0,'light':32.01,'canopy':31.21,'leaf':56.18,'sap':33.18,'sub-t':22.51,'sub-w':69.99,'ec':2.57,'ph':6.08,'sup-t':20.19,'sup-ec':2.60,'drain':28.01,'flow':44.98},
+  {'temp':33.08,'hum':55.17,'co2':519.99,'light':32.01,'canopy':31.86,'leaf':55.57,'sap':34.09,'sub-t':22.48,'sub-w':70.01,'ec':2.59,'ph':6.08,'sup-t':20.2,'sup-ec':2.59,'drain':28.02,'flow':45.0},
+  {'temp':33.78,'hum':53.99,'co2':520.01,'light':32.0,'canopy':32.51,'leaf':55.01,'sap':35.02,'sub-t':22.5,'sub-w':70.02,'ec':2.60,'ph':6.1,'sup-t':20.21,'sup-ec':2.60,'drain':28.01,'flow':45.0},
+  {'temp':33.1,'hum':55.18,'co2':520.0,'light':31.99,'canopy':31.85,'leaf':55.59,'sap':34.09,'sub-t':22.5,'sub-w':70.01,'ec':2.57,'ph':6.08,'sup-t':20.19,'sup-ec':2.59,'drain':27.99,'flow':45.0},
+  {'temp':32.35,'hum':56.32,'co2':520.01,'light':32.01,'canopy':31.2,'leaf':56.16,'sap':33.17,'sub-t':22.5,'sub-w':69.99,'ec':2.58,'ph':6.12,'sup-t':20.2,'sup-ec':2.61,'drain':28.01,'flow':45.01},
+  {'temp':31.65,'hum':57.48,'co2':519.99,'light':32.01,'canopy':30.59,'leaf':56.77,'sap':32.25,'sub-t':22.51,'sub-w':70.0,'ec':2.58,'ph':6.09,'sup-t':20.19,'sup-ec':2.60,'drain':27.98,'flow':44.99},
+  {'temp':30.94,'hum':58.66,'co2':519.99,'light':32.0,'canopy':29.92,'leaf':57.34,'sap':31.31,'sub-t':22.5,'sub-w':70.0,'ec':2.56,'ph':6.11,'sup-t':20.19,'sup-ec':2.60,'drain':27.98,'flow':45.0},
+  {'temp':30.21,'hum':59.83,'co2':520.01,'light':32.0,'canopy':29.3,'leaf':57.93,'sap':30.41,'sub-t':22.48,'sub-w':69.98,'ec':2.58,'ph':6.12,'sup-t':20.19,'sup-ec':2.61,'drain':28.01,'flow':45.01},
+  {'temp':29.51,'hum':61.02,'co2':519.99,'light':31.98,'canopy':28.64,'leaf':58.49,'sap':29.51,'sub-t':22.5,'sub-w':69.99,'ec':2.59,'ph':6.11,'sup-t':20.19,'sup-ec':2.60,'drain':28.01,'flow':44.98},
+  {'temp':28.8,'hum':62.19,'co2':519.98,'light':31.98,'canopy':28.0,'leaf':59.09,'sap':28.6,'sub-t':22.5,'sub-w':70.01,'ec':2.56,'ph':6.11,'sup-t':20.21,'sup-ec':2.58,'drain':28.01,'flow':45.01},
+  {'temp':28.07,'hum':63.32,'co2':520.02,'light':32.01,'canopy':27.36,'leaf':59.66,'sap':27.66,'sub-t':22.5,'sub-w':69.99,'ec':2.59,'ph':6.11,'sup-t':20.18,'sup-ec':2.62,'drain':28.01,'flow':45.01},
+  {'temp':27.36,'hum':64.5,'co2':520.01,'light':32.02,'canopy':26.72,'leaf':60.26,'sap':26.75,'sub-t':22.5,'sub-w':70.0,'ec':2.59,'ph':6.09,'sup-t':20.21,'sup-ec':2.61,'drain':27.98,'flow':45.02},
+  {'temp':26.62,'hum':65.67,'co2':520.0,'light':32.0,'canopy':26.06,'leaf':60.85,'sap':25.82,'sub-t':22.49,'sub-w':70.01,'ec':2.57,'ph':6.12,'sup-t':20.21,'sup-ec':2.59,'drain':27.98,'flow':45.02},
+  {'temp':25.9,'hum':66.84,'co2':520.0,'light':32.01,'canopy':25.45,'leaf':61.42,'sap':24.92,'sub-t':22.51,'sub-w':69.98,'ec':2.57,'ph':6.11,'sup-t':20.19,'sup-ec':2.60,'drain':28.0,'flow':45.0},
+  {'temp':25.2,'hum':68.01,'co2':519.99,'light':32.01,'canopy':24.79,'leaf':61.99,'sap':23.98,'sub-t':22.49,'sub-w':69.98,'ec':2.58,'ph':6.11,'sup-t':20.19,'sup-ec':2.59,'drain':28.0,'flow':45.01},
+  {'temp':25.56,'hum':68.05,'co2':516.61,'light':31.62,'canopy':24.57,'leaf':61.49,'sap':23.77,'sub-t':22.17,'sub-w':70.07,'ec':2.56,'ph':6.19,'sup-t':20.23,'sup-ec':2.61,'drain':27.69,'flow':45.5},
+  {'temp':25.19,'hum':68.76,'co2':521.16,'light':31.97,'canopy':24.76,'leaf':61.41,'sap':23.68,'sub-t':22.8,'sub-w':69.95,'ec':2.60,'ph':6.08,'sup-t':19.94,'sup-ec':2.61,'drain':27.63,'flow':44.53},
+  {'temp':25.25,'hum':67.6,'co2':527.71,'light':31.63,'canopy':25.0,'leaf':62.2,'sap':24.21,'sub-t':22.31,'sub-w':70.05,'ec':2.58,'ph':6.09,'sup-t':20.42,'sup-ec':2.64,'drain':27.84,'flow':45.16},
+  {'temp':25.28,'hum':68.49,'co2':526.98,'light':31.72,'canopy':24.59,'leaf':62.3,'sap':23.75,'sub-t':22.28,'sub-w':69.11,'ec':2.54,'ph':6.09,'sup-t':20.26,'sup-ec':2.58,'drain':27.77,'flow':45.28},
+  {'temp':25.35,'hum':67.91,'co2':522.92,'light':32.41,'canopy':25.01,'leaf':62.23,'sap':24.12,'sub-t':22.79,'sub-w':69.84,'ec':2.58,'ph':6.13,'sup-t':20.45,'sup-ec':2.62,'drain':27.64,'flow':44.55},
+  {'temp':25.05,'hum':68.51,'co2':521.08,'light':31.8,'canopy':24.52,'leaf':62.35,'sap':24.14,'sub-t':22.8,'sub-w':70.0,'ec':2.58,'ph':6.02,'sup-t':19.92,'sup-ec':2.59,'drain':27.85,'flow':44.66},
+  {'temp':24.89,'hum':68.94,'co2':525.24,'light':32.07,'canopy':25.14,'leaf':62.93,'sap':24.12,'sub-t':22.34,'sub-w':69.03,'ec':2.60,'ph':6.09,'sup-t':20.29,'sup-ec':2.63,'drain':27.73,'flow':45.12},
+  {'temp':25.3,'hum':67.98,'co2':513.62,'light':31.85,'canopy':24.68,'leaf':62.32,'sap':24.26,'sub-t':22.39,'sub-w':70.41,'ec':2.56,'ph':6.18,'sup-t':20.39,'sup-ec':2.60,'drain':27.96,'flow':44.75},
+  {'temp':25.07,'hum':68.96,'co2':518.51,'light':32.01,'canopy':25.16,'leaf':62.29,'sap':24.03,'sub-t':22.44,'sub-w':69.34,'ec':2.57,'ph':6.15,'sup-t':20.28,'sup-ec':2.62,'drain':27.75,'flow':45.07},
+  {'temp':25.22,'hum':68.0,'co2':496.67,'light':31.98,'canopy':24.82,'leaf':61.56,'sap':23.32,'sub-t':22.49,'sub-w':70.0,'ec':2.58,'ph':6.08,'sup-t':20.22,'sup-ec':2.62,'drain':28.0,'flow':44.98},
+  {'temp':25.21,'hum':68.0,'co2':473.34,'light':32.0,'canopy':24.79,'leaf':61.12,'sap':22.69,'sub-t':22.49,'sub-w':70.0,'ec':2.58,'ph':6.12,'sup-t':20.2,'sup-ec':2.62,'drain':28.01,'flow':44.99},
+  {'temp':25.21,'hum':68.0,'co2':450.02,'light':32.0,'canopy':24.81,'leaf':60.66,'sap':21.99,'sub-t':22.5,'sub-w':70.02,'ec':2.58,'ph':6.09,'sup-t':20.2,'sup-ec':2.59,'drain':28.0,'flow':45.0},
+  {'temp':25.2,'hum':67.99,'co2':426.65,'light':32.01,'canopy':24.8,'leaf':60.21,'sap':21.34,'sub-t':22.48,'sub-w':70.01,'ec':2.59,'ph':6.11,'sup-t':20.2,'sup-ec':2.61,'drain':28.01,'flow':45.02},
+  {'temp':25.2,'hum':67.98,'co2':403.33,'light':32.0,'canopy':24.81,'leaf':59.79,'sap':20.66,'sub-t':22.5,'sub-w':70.0,'ec':2.59,'ph':6.1,'sup-t':20.21,'sup-ec':2.59,'drain':28.0,'flow':45.02},
+  {'temp':25.19,'hum':68.01,'co2':380.01,'light':32.01,'canopy':24.81,'leaf':59.35,'sap':20.0,'sub-t':22.49,'sub-w':70.01,'ec':2.59,'ph':6.11,'sup-t':20.18,'sup-ec':2.58,'drain':28.01,'flow':45.02},
+  {'temp':25.22,'hum':68.01,'co2':356.66,'light':31.98,'canopy':24.81,'leaf':58.9,'sap':19.33,'sub-t':22.51,'sub-w':70.02,'ec':2.56,'ph':6.11,'sup-t':20.19,'sup-ec':2.59,'drain':27.99,'flow':45.0},
+  {'temp':25.2,'hum':68.01,'co2':333.32,'light':31.98,'canopy':24.81,'leaf':58.45,'sap':18.66,'sub-t':22.52,'sub-w':69.99,'ec':2.58,'ph':6.09,'sup-t':20.19,'sup-ec':2.58,'drain':28.01,'flow':45.02},
+  {'temp':25.21,'hum':67.99,'co2':310.0,'light':31.99,'canopy':24.8,'leaf':58.01,'sap':18.0,'sub-t':22.49,'sub-w':70.01,'ec':2.57,'ph':6.1,'sup-t':20.2,'sup-ec':2.59,'drain':28.0,'flow':45.0},
+  {'temp':25.22,'hum':67.99,'co2':327.52,'light':32.01,'canopy':24.79,'leaf':58.34,'sap':18.51,'sub-t':22.51,'sub-w':69.98,'ec':2.58,'ph':6.1,'sup-t':20.22,'sup-ec':2.59,'drain':28.01,'flow':45.0},
+  {'temp':25.19,'hum':68.01,'co2':345.0,'light':32.01,'canopy':24.81,'leaf':58.67,'sap':19.01,'sub-t':22.51,'sub-w':70.02,'ec':2.59,'ph':6.09,'sup-t':20.2,'sup-ec':2.60,'drain':28.01,'flow':44.98},
+  {'temp':25.19,'hum':68.01,'co2':362.49,'light':31.99,'canopy':24.8,'leaf':59.02,'sap':19.5,'sub-t':22.52,'sub-w':70.01,'ec':2.57,'ph':6.11,'sup-t':20.2,'sup-ec':2.61,'drain':28.01,'flow':44.99},
+  {'temp':25.18,'hum':68.02,'co2':379.99,'light':32.02,'canopy':24.81,'leaf':59.34,'sap':20.02,'sub-t':22.52,'sub-w':70.01,'ec':2.57,'ph':6.11,'sup-t':20.18,'sup-ec':2.60,'drain':28.0,'flow':45.01},
+  {'temp':25.21,'hum':68.0,'co2':397.51,'light':32.02,'canopy':24.78,'leaf':59.66,'sap':20.48,'sub-t':22.52,'sub-w':70.0,'ec':2.60,'ph':6.09,'sup-t':20.18,'sup-ec':2.61,'drain':28.02,'flow':44.99},
+  {'temp':25.2,'hum':67.99,'co2':415.02,'light':31.99,'canopy':24.8,'leaf':59.98,'sap':21.02,'sub-t':22.49,'sub-w':70.0,'ec':2.59,'ph':6.11,'sup-t':20.22,'sup-ec':2.60,'drain':28.01,'flow':44.99},
+  {'temp':25.2,'hum':67.98,'co2':432.5,'light':32.0,'canopy':24.82,'leaf':60.31,'sap':21.49,'sub-t':22.5,'sub-w':70.02,'ec':2.59,'ph':6.08,'sup-t':20.21,'sup-ec':2.60,'drain':28.02,'flow':44.99},
+  {'temp':25.2,'hum':67.99,'co2':449.98,'light':32.01,'canopy':24.8,'leaf':60.67,'sap':22.01,'sub-t':22.5,'sub-w':69.98,'ec':2.59,'ph':6.09,'sup-t':20.19,'sup-ec':2.60,'drain':27.98,'flow':45.01},
+  {'temp':25.19,'hum':67.99,'co2':467.51,'light':31.99,'canopy':24.79,'leaf':61.02,'sap':22.48,'sub-t':22.51,'sub-w':69.99,'ec':2.57,'ph':6.09,'sup-t':20.19,'sup-ec':2.61,'drain':27.98,'flow':44.98},
+  {'temp':25.21,'hum':67.99,'co2':484.99,'light':31.99,'canopy':24.78,'leaf':61.34,'sap':23.0,'sub-t':22.51,'sub-w':70.0,'ec':2.59,'ph':6.1,'sup-t':20.18,'sup-ec':2.60,'drain':28.02,'flow':44.98},
+  {'temp':25.21,'hum':68.01,'co2':502.5,'light':32.0,'canopy':24.82,'leaf':61.65,'sap':23.5,'sub-t':22.5,'sub-w':70.01,'ec':2.58,'ph':6.12,'sup-t':20.18,'sup-ec':2.58,'drain':28.0,'flow':44.98},
+  {'temp':25.19,'hum':68.01,'co2':520.0,'light':31.99,'canopy':24.82,'leaf':62.0,'sap':24.0,'sub-t':22.5,'sub-w':69.98,'ec':2.59,'ph':6.11,'sup-t':20.21,'sup-ec':2.61,'drain':28.01,'flow':44.99},
+  {'temp':25.16,'hum':67.45,'co2':517.49,'light':31.96,'canopy':24.74,'leaf':61.25,'sap':23.95,'sub-t':22.61,'sub-w':69.74,'ec':2.55,'ph':6.18,'sup-t':19.94,'sup-ec':2.62,'drain':27.66,'flow':44.46},
+  {'temp':25.38,'hum':68.64,'co2':520.88,'light':32.08,'canopy':24.85,'leaf':61.68,'sap':23.73,'sub-t':22.4,'sub-w':70.35,'ec':2.60,'ph':6.17,'sup-t':20.33,'sup-ec':2.64,'drain':28.08,'flow':44.8},
+  {'temp':25.26,'hum':67.41,'co2':522.45,'light':31.74,'canopy':24.51,'leaf':62.64,'sap':23.9,'sub-t':22.68,'sub-w':70.16,'ec':2.60,'ph':6.16,'sup-t':20.49,'sup-ec':2.62,'drain':28.1,'flow':45.19},
+  {'temp':24.84,'hum':68.88,'co2':525.14,'light':31.78,'canopy':24.56,'leaf':62.38,'sap':23.86,'sub-t':22.39,'sub-w':68.96,'ec':2.61,'ph':6.11,'sup-t':20.14,'sup-ec':2.57,'drain':28.11,'flow':44.37},
+  {'temp':25.39,'hum':67.42,'co2':518.75,'light':31.85,'canopy':24.7,'leaf':62.41,'sap':24.2,'sub-t':22.55,'sub-w':69.13,'ec':2.55,'ph':6.04,'sup-t':20.27,'sup-ec':2.61,'drain':27.81,'flow':45.22},
+  {'temp':25.19,'hum':67.88,'co2':516.46,'light':32.24,'canopy':24.51,'leaf':61.87,'sap':23.84,'sub-t':22.62,'sub-w':69.97,'ec':2.59,'ph':6.02,'sup-t':20.14,'sup-ec':2.61,'drain':27.59,'flow':44.73},
+  {'temp':25.19,'hum':67.99,'co2':519.99,'light':31.99,'canopy':24.78,'leaf':60.18,'sap':22.74,'sub-t':22.5,'sub-w':67.34,'ec':2.5,'ph':6.11,'sup-t':20.21,'sup-ec':2.59,'drain':26.35,'flow':42.23},
+  {'temp':25.18,'hum':68.02,'co2':520.01,'light':32.0,'canopy':24.8,'leaf':58.34,'sap':21.5,'sub-t':22.48,'sub-w':64.65,'ec':2.59,'ph':6.11,'sup-t':20.2,'sup-ec':2.73,'drain':24.68,'flow':39.48},
+  {'temp':25.21,'hum':67.99,'co2':520.0,'light':32.0,'canopy':24.8,'leaf':56.49,'sap':20.24,'sub-t':22.49,'sub-w':61.99,'ec':2.7,'ph':6.08,'sup-t':20.2,'sup-ec':2.84,'drain':22.99,'flow':36.76},
+  {'temp':25.21,'hum':68.01,'co2':519.99,'light':31.99,'canopy':24.79,'leaf':54.67,'sap':19.01,'sub-t':22.51,'sub-w':59.32,'ec':2.81,'ph':6.1,'sup-t':20.21,'sup-ec':2.94,'drain':21.33,'flow':34.02},
+  {'temp':25.2,'hum':68.01,'co2':520.0,'light':32.01,'canopy':24.81,'leaf':52.82,'sap':17.73,'sub-t':22.5,'sub-w':56.66,'ec':2.89,'ph':6.08,'sup-t':20.2,'sup-ec':3.03,'drain':19.66,'flow':31.23},
+  {'temp':25.21,'hum':67.98,'co2':520.01,'light':32.01,'canopy':24.8,'leaf':51.0,'sap':16.5,'sub-t':22.5,'sub-w':54.01,'ec':3.02,'ph':6.1,'sup-t':20.21,'sup-ec':3.16,'drain':17.99,'flow':28.5},
+  {'temp':25.19,'hum':67.98,'co2':519.98,'light':32.02,'canopy':24.79,'leaf':49.18,'sap':15.25,'sub-t':22.49,'sub-w':51.32,'ec':3.1,'ph':6.1,'sup-t':20.2,'sup-ec':3.24,'drain':16.33,'flow':25.74},
+  {'temp':25.2,'hum':67.99,'co2':520.0,'light':32.01,'canopy':24.81,'leaf':47.32,'sap':13.98,'sub-t':22.51,'sub-w':48.66,'ec':3.21,'ph':6.11,'sup-t':20.22,'sup-ec':3.38,'drain':14.66,'flow':23.0},
+  {'temp':25.19,'hum':67.99,'co2':520.02,'light':32.01,'canopy':24.8,'leaf':45.5,'sap':12.77,'sub-t':22.49,'sub-w':46.0,'ec':3.31,'ph':6.11,'sup-t':20.21,'sup-ec':3.49,'drain':13.01,'flow':20.26},
+  {'temp':25.2,'hum':68.01,'co2':520.0,'light':31.99,'canopy':24.79,'leaf':43.65,'sap':11.49,'sub-t':22.52,'sub-w':43.33,'ec':3.39,'ph':6.09,'sup-t':20.18,'sup-ec':3.6,'drain':11.32,'flow':17.51},
+  {'temp':25.21,'hum':68.02,'co2':519.98,'light':31.99,'canopy':24.81,'leaf':41.82,'sap':10.25,'sub-t':22.49,'sub-w':40.68,'ec':3.51,'ph':6.11,'sup-t':20.19,'sup-ec':3.69,'drain':9.66,'flow':14.76},
+  {'temp':25.19,'hum':68.0,'co2':519.99,'light':32.01,'canopy':24.8,'leaf':40.0,'sap':8.99,'sub-t':22.51,'sub-w':38.0,'ec':3.61,'ph':6.09,'sup-t':20.22,'sup-ec':3.82,'drain':8.0,'flow':11.99},
+  {'temp':25.2,'hum':68.0,'co2':520.02,'light':32.01,'canopy':24.81,'leaf':41.82,'sap':10.24,'sub-t':22.51,'sub-w':40.68,'ec':3.5,'ph':6.08,'sup-t':20.21,'sup-ec':3.71,'drain':9.66,'flow':14.76},
+  {'temp':25.19,'hum':68.02,'co2':519.99,'light':32.0,'canopy':24.82,'leaf':43.66,'sap':11.5,'sub-t':22.49,'sub-w':43.31,'ec':3.38,'ph':6.1,'sup-t':20.19,'sup-ec':3.6,'drain':11.33,'flow':17.48},
+  {'temp':25.22,'hum':68.01,'co2':520.01,'light':32.01,'canopy':24.79,'leaf':45.49,'sap':12.76,'sub-t':22.51,'sub-w':45.99,'ec':3.31,'ph':6.1,'sup-t':20.18,'sup-ec':3.46,'drain':12.99,'flow':20.26},
+  {'temp':25.2,'hum':68.01,'co2':520.0,'light':31.98,'canopy':24.79,'leaf':47.33,'sap':13.98,'sub-t':22.5,'sub-w':48.68,'ec':3.2,'ph':6.08,'sup-t':20.22,'sup-ec':3.37,'drain':14.65,'flow':23.0},
+  {'temp':25.19,'hum':67.99,'co2':520.0,'light':32.0,'canopy':24.79,'leaf':49.16,'sap':15.26,'sub-t':22.48,'sub-w':51.35,'ec':3.08,'ph':6.1,'sup-t':20.2,'sup-ec':3.28,'drain':16.34,'flow':25.75},
+  {'temp':25.2,'hum':68.01,'co2':520.02,'light':31.99,'canopy':24.78,'leaf':51.01,'sap':16.49,'sub-t':22.51,'sub-w':54.01,'ec':3.01,'ph':6.11,'sup-t':20.19,'sup-ec':3.13,'drain':18.0,'flow':28.51},
+  {'temp':25.19,'hum':68.01,'co2':520.0,'light':32.01,'canopy':24.81,'leaf':52.85,'sap':17.73,'sub-t':22.51,'sub-w':56.66,'ec':2.89,'ph':6.08,'sup-t':20.19,'sup-ec':3.02,'drain':19.68,'flow':31.25},
+  {'temp':25.22,'hum':68.0,'co2':519.99,'light':32.01,'canopy':24.79,'leaf':54.66,'sap':19.01,'sub-t':22.51,'sub-w':59.33,'ec':2.78,'ph':6.09,'sup-t':20.22,'sup-ec':2.94,'drain':21.35,'flow':34.0},
+  {'temp':25.22,'hum':68.0,'co2':520.0,'light':32.02,'canopy':24.8,'leaf':56.51,'sap':20.26,'sub-t':22.48,'sub-w':62.0,'ec':2.71,'ph':6.1,'sup-t':20.19,'sup-ec':2.81,'drain':23.01,'flow':36.74},
+  {'temp':25.2,'hum':68.0,'co2':520.01,'light':31.99,'canopy':24.78,'leaf':58.35,'sap':21.49,'sub-t':22.52,'sub-w':64.66,'ec':2.62,'ph':6.12,'sup-t':20.18,'sup-ec':2.72,'drain':24.66,'flow':39.51},
+  {'temp':25.21,'hum':68.02,'co2':519.99,'light':32.0,'canopy':24.81,'leaf':60.15,'sap':22.73,'sub-t':22.51,'sub-w':67.33,'ec':2.5,'ph':6.1,'sup-t':20.2,'sup-ec':2.62,'drain':26.35,'flow':42.24},
+  {'temp':25.21,'hum':68.0,'co2':520.0,'light':32.0,'canopy':24.81,'leaf':61.99,'sap':23.98,'sub-t':22.51,'sub-w':70.0,'ec':2.58,'ph':6.1,'sup-t':20.19,'sup-ec':2.59,'drain':28.0,'flow':45.02},
+  {'temp':25.04,'hum':68.85,'co2':519.86,'light':31.64,'canopy':25.06,'leaf':61.91,'sap':24.29,'sub-t':22.46,'sub-w':69.13,'ec':2.59,'ph':6.16,'sup-t':20.09,'sup-ec':2.59,'drain':27.63,'flow':45.06},
+  {'temp':25.5,'hum':68.72,'co2':523.3,'light':32.41,'canopy':24.9,'leaf':62.55,'sap':24.01,'sub-t':22.24,'sub-w':69.37,'ec':2.55,'ph':6.15,'sup-t':19.91,'sup-ec':2.60,'drain':27.89,'flow':45.41},
+  {'temp':25.24,'hum':68.23,'co2':513.54,'light':31.82,'canopy':25.17,'leaf':62.41,'sap':24.02,'sub-t':22.68,'sub-w':70.68,'ec':2.55,'ph':6.19,'sup-t':20.29,'sup-ec':2.60,'drain':28.15,'flow':44.79},
+  {'temp':25.49,'hum':68.57,'co2':522.18,'light':31.69,'canopy':25.15,'leaf':61.87,'sap':24.3,'sub-t':22.2,'sub-w':69.21,'ec':2.56,'ph':6.04,'sup-t':20.09,'sup-ec':2.62,'drain':27.87,'flow':45.6},
+  {'temp':25.5,'hum':68.71,'co2':516.11,'light':32.13,'canopy':24.84,'leaf':61.3,'sap':23.86,'sub-t':22.52,'sub-w':70.01,'ec':2.56,'ph':6.18,'sup-t':19.99,'sup-ec':2.61,'drain':28.19,'flow':45.14},
+  {'temp':25.46,'hum':68.13,'co2':525.07,'light':31.55,'canopy':24.46,'leaf':62.26,'sap':24.06,'sub-t':22.6,'sub-w':70.56,'ec':2.57,'ph':6.13,'sup-t':20.2,'sup-ec':2.61,'drain':27.82,'flow':45.62},
+  {'temp':25.19,'hum':68.62,'co2':522.89,'light':31.81,'canopy':24.48,'leaf':61.18,'sap':23.96,'sub-t':22.49,'sub-w':69.38,'ec':2.59,'ph':6.07,'sup-t':20.33,'sup-ec':2.62,'drain':28.3,'flow':45.64},
+  {'temp':24.92,'hum':67.74,'co2':520.96,'light':31.83,'canopy':24.78,'leaf':61.57,'sap':23.82,'sub-t':22.23,'sub-w':69.56,'ec':2.57,'ph':6.12,'sup-t':20.05,'sup-ec':2.63,'drain':27.71,'flow':44.77},
+  {'temp':25.26,'hum':67.62,'co2':524.1,'light':32.0,'canopy':24.81,'leaf':62.0,'sap':23.86,'sub-t':22.18,'sub-w':70.93,'ec':2.58,'ph':6.19,'sup-t':20.03,'sup-ec':2.59,'drain':27.62,'flow':44.99},
+  {'temp':25.49,'hum':68.31,'co2':519.54,'light':32.04,'canopy':25.06,'leaf':61.87,'sap':24.28,'sub-t':22.65,'sub-w':70.55,'ec':2.57,'ph':6.08,'sup-t':20.24,'sup-ec':2.58,'drain':28.04,'flow':44.42},
+  {'temp':25.2,'hum':68.54,'co2':516.56,'light':32.47,'canopy':24.93,'leaf':61.29,'sap':24.34,'sub-t':22.43,'sub-w':70.62,'ec':2.57,'ph':6.18,'sup-t':20.35,'sup-ec':2.58,'drain':28.01,'flow':45.0},
+  {'temp':24.86,'hum':67.26,'co2':517.4,'light':31.97,'canopy':24.77,'leaf':62.2,'sap':24.01,'sub-t':22.38,'sub-w':70.24,'ec':2.56,'ph':6.19,'sup-t':20.35,'sup-ec':2.58,'drain':27.86,'flow':45.44},
+  {'temp':25.22,'hum':68.43,'co2':516.88,'light':32.3,'canopy':24.7,'leaf':62.32,'sap':24.35,'sub-t':22.56,'sub-w':70.62,'ec':2.60,'ph':6.13,'sup-t':19.91,'sup-ec':2.60,'drain':28.39,'flow':45.38},
+  {'temp':25.41,'hum':68.16,'co2':523.45,'light':32.08,'canopy':24.55,'leaf':62.24,'sap':24.09,'sub-t':22.73,'sub-w':69.26,'ec':2.59,'ph':6.01,'sup-t':20.47,'sup-ec':2.57,'drain':27.6,'flow':44.75},
+  {'temp':24.94,'hum':68.39,'co2':518.6,'light':32.26,'canopy':25.11,'leaf':62.69,'sap':24.17,'sub-t':22.2,'sub-w':69.24,'ec':2.56,'ph':6.07,'sup-t':20.3,'sup-ec':2.60,'drain':27.84,'flow':44.56},
+  {'temp':25.51,'hum':67.68,'co2':517.73,'light':32.26,'canopy':24.96,'leaf':62.27,'sap':24.14,'sub-t':22.57,'sub-w':69.35,'ec':2.56,'ph':6.11,'sup-t':20.03,'sup-ec':2.64,'drain':27.83,'flow':44.72},
+  {'temp':24.98,'hum':68.42,'co2':517.15,'light':31.85,'canopy':25.12,'leaf':62.55,'sap':23.84,'sub-t':22.24,'sub-w':70.37,'ec':2.57,'ph':6.19,'sup-t':20.39,'sup-ec':2.63,'drain':28.26,'flow':44.72},
+  {'temp':25.04,'hum':68.44,'co2':517.6,'light':31.94,'canopy':24.62,'leaf':61.96,'sap':23.79,'sub-t':22.53,'sub-w':70.91,'ec':2.59,'ph':6.03,'sup-t':20.27,'sup-ec':2.61,'drain':27.78,'flow':45.23},
+  // Nighttime scene: low light, low CO2 (should NOT trigger CO2 alarm at night)
+  {'temp':21.5,'hum':72.0,'co2':380.0,'light':1.5,'canopy':20.8,'leaf':68.0,'sap':6.5,'sub-t':21.3,'sub-w':72.0,'ec':2.65,'ph':6.2,'sup-t':19.8,'sup-ec':2.60,'drain':26.0,'flow':28.0},
+  {'temp':21.2,'hum':73.0,'co2':370.0,'light':0.8,'canopy':20.5,'leaf':67.5,'sap':5.8,'sub-t':21.1,'sub-w':71.5,'ec':2.63,'ph':6.21,'sup-t':19.6,'sup-ec':2.58,'drain':25.5,'flow':26.0},
+  {'temp':20.8,'hum':74.0,'co2':360.0,'light':0.5,'canopy':20.1,'leaf':67.0,'sap':5.0,'sub-t':20.9,'sub-w':71.0,'ec':2.62,'ph':6.22,'sup-t':19.4,'sup-ec':2.57,'drain':25.0,'flow':24.0},
+  {'temp':20.5,'hum':75.0,'co2':350.0,'light':0.3,'canopy':19.8,'leaf':66.5,'sap':4.5,'sub-t':20.6,'sub-w':70.5,'ec':2.60,'ph':6.23,'sup-t':19.2,'sup-ec':2.56,'drain':24.5,'flow':22.0},
+  {'temp':20.3,'hum':76.0,'co2':345.0,'light':0.2,'canopy':19.5,'leaf':66.0,'sap':4.2,'sub-t':20.3,'sub-w':70.0,'ec':2.58,'ph':6.24,'sup-t':19.0,'sup-ec':2.55,'drain':24.0,'flow':20.0},
+];
+
+// ─── API Key (loads from localStorage; uses Demo key as fallback) ───
+const DEMO_DSKEY='sk-927a4bbea71948a4ac25d0ccc379b4af';
+function getAPIKey(){ return localStorage.getItem('yuncang_ds_key')||DEMO_DSKEY; }
+function setAPIKey(k){ localStorage.setItem('yuncang_ds_key',k); }
+let DSKEY=getAPIKey();
+// To change key: open browser console → setAPIKey('sk-your-key')
+const DSURL='https://api.deepseek.com/v1/chat/completions';
+const AI_CYCLE=15;
+const SHADE_MAXW={'shd-e':425,'shd-m':425,'shd-w':418};
+
+const SENSORS={
+  temp:    {label:'空气温度',unit:'°C',   lo:18,hi:26, grp:'env'},
+  hum:     {label:'空气湿度',unit:'%',    lo:55,hi:75, grp:'env'},
+  co2:     {label:'CO₂浓度', unit:'ppm', lo:400,hi:1200,grp:'env'},
+  light:   {label:'光照强度',unit:'klux', lo:15,hi:50, grp:'env'},
+  canopy:  {label:'冠层温度',unit:'°C',   lo:18,hi:26, grp:'crop'},
+  leaf:    {label:'叶面湿度',unit:'%',    lo:55,hi:80, grp:'crop'},
+  sap:     {label:'茎流速率',unit:'g/h',  lo:15,hi:35, grp:'crop'},
+  'sub-t': {label:'基质温度',unit:'°C',   lo:18,hi:25, grp:'sub'},
+  'sub-w': {label:'基质含水',unit:'%',    lo:60,hi:75, grp:'sub'},
+  ec:      {label:'EC值',   unit:'mS/cm',lo:2.5,hi:3.5,grp:'sub'},
+  ph:      {label:'pH值',   unit:'',     lo:6.0,hi:6.5,grp:'sub'},
+  'sup-t': {label:'供液温度',unit:'°C',   lo:18,hi:23, grp:'irr'},
+  'sup-ec':{label:'供液EC', unit:'mS/cm',lo:2.5,hi:3.2,grp:'irr'},
+  drain:   {label:'回液率', unit:'%',    lo:20,hi:30, grp:'irr'},
+  flow:    {label:'灌溉流量',unit:'L/h',  lo:20,hi:80, grp:'irr'},
+  vpd:     {label:'VPD',     unit:'kPa',  lo:0.8,hi:1.2,grp:'env'},
+};
+// Derived metrics
+let dliAccum=0; // Daily Light Integral accumulator (mol/m²/d)
+function calcVPD(t,h){ return ((1-h/100)*0.6108*Math.exp(17.27*t/(t+237.3))).toFixed(2); }
+function updateDerived(d){
+  const v=parseFloat(calcVPD(d.temp,d.hum));
+  if(currentData) currentData.vpd=v;
+  const el=document.getElementById('vpd-disp'); if(el) el.textContent=v.toFixed(2);
+  // DLI: approximate conversion klux→PPFD 18.5 μmol/m²/s per klux, 5s interval
+  dliAccum+=(d.light||0)*18.5*5/1e6;
+  const dliel=document.getElementById('dli-disp'); if(dliel) dliel.textContent=dliAccum.toFixed(1);
+}
+const GROUPS={
+  env: {keys:['temp','hum','co2','light'],colors:['#ff6b35','#1677ff','#52c41a','#faad14']},
+  crop:{keys:['canopy','leaf','sap'],     colors:['#ff4d4f','#13c2c2','#722ed1']},
+  sub: {keys:['sub-t','sub-w','ec','ph'], colors:['#ff8c00','#1677ff','#52c41a','#eb2f96']},
+  irr: {keys:['sup-t','sup-ec','drain','flow'],colors:['#4096ff','#13c2c2','#ff7875','#95de64']},
+};
+
+// ─── Data Replay ───
+let replayIdx=0; let currentData={};
+const dataBuffer={}; const MAX_BUF=2000;
+Object.keys(SENSORS).forEach(k=>dataBuffer[k]=[]);
+
+function stepReplay(){
+  const pt=REPLAY_DATA[replayIdx];
+  currentData={...pt};
+  const ts=Date.now();
+  Object.keys(SENSORS).forEach(k=>{ if(pt[k]!==undefined){ dataBuffer[k].push({ts,v:pt[k]}); if(dataBuffer[k].length>MAX_BUF) dataBuffer[k].shift(); }});
+  updateDerived(pt);
+  document.getElementById('last-sample-time').textContent=new Date().toLocaleTimeString('zh-CN');
+  const rp=document.getElementById('replay-progress-hd'); if(rp) rp.textContent=(replayIdx+1)+'/125';
+  updateCharts(); updateSPBadge(); updateActuatorFromData(currentData);
+  // Water deficit triggers plant wilting; recover when back to normal
+  const anomalyKeys=detectAnomalies(currentData);
+  if(anomalyKeys.includes('sub-w')&&!plantsWilted){ setTimeout(()=>setPlantWilt(true),3000); }
+  else if(!anomalyKeys.includes('sub-w')&&plantsWilted){ setPlantWilt(false); }
+  // Auto-clear anomaly UI when all sensors return to normal
+  if(anomalyKeys.length===0){
+    hideAnomalyBox();
+    document.getElementById('ai-advice-box')?.classList.remove('show');
+    document.getElementById('ai-routine-box')?.classList.remove('show');
+    // Reset overlay positions
+    const ab2=document.getElementById('ai-advice-box'); if(ab2) ab2.style.top='28px';
+    const rb2=document.getElementById('ai-routine-box'); if(rb2) rb2.style.top='28px';
+  }
+  replayIdx=(replayIdx+1)%125;
+}
+
+function updateActuatorFromData(d){
+  const se=document.getElementById('sup-ec-disp'); if(se) se.textContent=(d['sup-ec']||2.5).toFixed(1);
+  const dr=document.getElementById('drain-disp'); if(dr) dr.textContent=(d.drain||28).toFixed(0)+'%';
+  const scec=document.getElementById('scr-ec'); if(scec) scec.textContent='EC: '+(d.ec||2.4).toFixed(2)+' mS/cm';
+  const scph=document.getElementById('scr-ph'); if(scph) scph.textContent='pH: '+(d.ph||6.1).toFixed(1);
+  // Dynamic heatmap from temp
+  const tNorm=Math.max(0,Math.min(1,(d.temp-20)/14));
+  setHeatmap(tNorm>0.55, d.temp);
+  // Temp overlay tint
+  const ov=document.getElementById('temp-overlay');
+  if(ov){ const opa=tNorm>0.55?Math.min(0.06,(tNorm-0.55)*0.3):0; ov.setAttribute('fill',`rgba(255,60,0,${opa.toFixed(3)})`); }
+}
+
+// ─── ECharts 2x2 ───
+const chartInstances={}; const TW_MS={'10m':600000,'20m':1200000,'1h':3600000,'6h':21600000,'12h':43200000,'24h':86400000,'48h':172800000};
+let currentTW='10m';
+
+function buildLegendHTML(grp){
+  const cfg=GROUPS[grp];
+  let html='';
+  cfg.keys.forEach((k,i)=>{
+    const s=SENSORS[k];
+    const buf=dataBuffer[k]; const last=(buf&&buf.length>0)?buf[buf.length-1].v:null;
+    const isWarn=last!==null&&(last<s.lo||last>s.hi);
+    const vs=last!==null?last.toFixed(1)+s.unit:'--';
+    html+=`<div class="leg-item" data-name="${s.label}">
+      <span class="leg-line" style="background:${cfg.colors[i]}"></span>
+      <span class="leg-name">${s.label}</span>
+      <span class="leg-val${isWarn?' warn':''}">${vs}</span>
+    </div>`;
+  });
+  return html;
+}
+
+function renderLegendHTML(grp){
+  const el=document.getElementById('leg-'+grp); if(!el) return;
+  el.innerHTML=buildLegendHTML(grp);
+  if(GROUPS[grp].keys.length===3) el.classList.add('leg-3col');
+  else el.classList.remove('leg-3col');
+  // Click-to-toggle: sync with ECharts legend state
+  el.querySelectorAll('.leg-item').forEach(item=>{
+    item.addEventListener('click',()=>{
+      const name=item.dataset.name;
+      const chart=chartInstances[grp]; if(!chart) return;
+      chart.dispatchAction({type:'legendToggleSelect',name:name});
+    });
+  });
+}
+
+function initCharts(){
+  Object.entries(GROUPS).forEach(([grp,cfg])=>{
+    const el=document.getElementById('chart-'+grp); if(!el) return;
+    const chart=echarts.init(el,null,{renderer:'canvas'});
+    chartInstances[grp]=chart;
+    chart.setOption({
+      backgroundColor:'transparent', animation:false,
+      legend:{show:false,
+        selected:cfg.keys.reduce((acc,k)=>{acc[SENSORS[k].label]=true;return acc;},{})
+      },
+      grid:{top:4,right:10,bottom:12,left:28},
+      xAxis:{type:'time',splitNumber:4,
+        axisLabel:{fontSize:7,color:'#8a9ab0',hideOverlap:true,
+          formatter:v=>{const d=new Date(v);return d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');}},
+        axisLine:{lineStyle:{color:'#dce8f8'}},
+        splitLine:{show:true,lineStyle:{color:'#f0f5ff',type:'dashed'}}},
+      yAxis:{type:'value',min:-5,max:105,
+        axisLabel:{fontSize:7,color:'#8a9ab0',formatter:v=>Math.round(v)+'%',showMinLabel:false,showMaxLabel:false},
+        axisLine:{show:false},
+        splitLine:{lineStyle:{color:'#f0f5ff'}}},
+      series:cfg.keys.map((k,i)=>({
+        name:SENSORS[k].label,type:'line',symbol:'none',clip:false,
+        lineStyle:{color:cfg.colors[i],width:1.5},
+        itemStyle:{color:cfg.colors[i]},data:[],
+        markArea:i===0?{silent:true,data:[[{yAxis:10},{yAxis:90}]],itemStyle:{color:'rgba(82,196,26,0.05)'}}:undefined
+      })),
+      tooltip:{trigger:'axis',textStyle:{fontSize:9},confine:true,
+        formatter:params=>{
+          const d=new Date(params[0].value[0]);
+          let html=`<div style="font-size:8px;color:#8a9ab0">${d.toLocaleTimeString('zh-CN')}</div>`;
+          params.forEach((p,i)=>{const k=GROUPS[grp].keys[i];const buf=dataBuffer[k];const pts=buf.filter(pp=>pp.ts<=p.value[0]);const rv=pts.length>0?pts[pts.length-1].v.toFixed(2):'--';html+=`<span style="color:${cfg.colors[i]}">${SENSORS[k].label}</span>: <b>${rv}${SENSORS[k].unit}</b><br>`;});
+          return html;
+        }}
+    });
+    // Sync custom HTML legend with ECharts internal toggle state
+    chart.on('legendselectchanged',(params)=>{
+      const legEl=document.getElementById('leg-'+grp); if(!legEl) return;
+      legEl.querySelectorAll('.leg-item').forEach(item=>{
+        item.classList.toggle('off',params.selected[item.dataset.name]===false);
+      });
+    });
+    renderLegendHTML(grp);
+  });
+}
+
+function nrm(k,v){const s=SENSORS[k];return Math.max(-20,Math.min(120,((v-s.lo)/(s.hi-s.lo))*80+10));}
+
+function updateCharts(){
+  const wms=TW_MS[currentTW]; const now=Date.now(); const cutoff=now-wms;
+  Object.entries(GROUPS).forEach(([grp,cfg])=>{
+    const chart=chartInstances[grp]; if(!chart) return;
+    let gMin=90, gMax=10;
+    const series=cfg.keys.map((k,i)=>{
+      const raw=dataBuffer[k].filter(p=>p.ts>=cutoff);
+      const step=Math.max(Math.ceil(raw.length/150),1);
+      const pts=raw.length<=150?raw:raw.filter((_,j)=>j%step===0);
+      const data=pts.map(p=>{
+        const nv=parseFloat(nrm(k,p.v).toFixed(1));
+        if(nv<gMin) gMin=nv; if(nv>gMax) gMax=nv;
+        return [p.ts,nv];
+      });
+      return {name:SENSORS[k].label,data,lineStyle:{color:cfg.colors[i],width:1.5}};
+    });
+    // Adaptive yAxis: never narrower than [-5,105], expand outward with 10% padding
+    const span=Math.max(gMax-gMin,1);
+    let yMin=Math.min(gMin,-5), yMax=Math.max(gMax,105);
+    const pad=span*0.10;
+    yMin=Math.floor((yMin-pad)/5)*5;
+    yMax=Math.ceil((yMax+pad)/5)*5;
+    chart.setOption({yAxis:{min:yMin,max:yMax},series},{notMerge:false,lazyUpdate:true});
+    renderLegendHTML(grp);
+  });
+}
+
+function setTW(tw){
+  currentTW=tw;
+  const M={'10分':'10m','20分':'20m','1时':'1h','6时':'6h','12时':'12h','24时':'24h','48时':'48h'};
+  document.querySelectorAll('.tw-btn').forEach(b=>b.classList.toggle('active',M[b.textContent.trim()]===tw));
+  updateCharts();
+}
+
+function updateSPBadge(){
+  const any=Object.keys(SENSORS).some(k=>{const v=currentData[k];if(!v)return false;const s=SENSORS[k];return v<s.lo||v>s.hi;});
+  const b=document.getElementById('sp-badge'); b.textContent=any?'⚠ 检测到异常':'✅ 全部正常'; b.className='pbadge '+(any?'warn':'ok');
+}
+
+// ─── AI Log Terminal ───
+const LOG_C={data:'#4096ff',check:'#6a8aaa',ok:'#52c41a',warn:'#faad14',error:'#ff4d4f',ai:'#b37feb',exec:'#13c2c2',sep:'#1e3a5a'};
+function appendLog(type,msg){
+  const log=document.getElementById('ai-log'); if(!log) return;
+  const ts=new Date().toLocaleTimeString('zh-CN');
+  const line=document.createElement('div');
+  line.style.cssText='color:'+(LOG_C[type]||'#8aa8c0')+';word-break:break-all;';
+  line.innerHTML='<span style="color:#3a5a7a">['+ts+']</span> '+msg;
+  log.appendChild(line);
+  log.scrollTop=log.scrollHeight;
+  while(log.children.length>100) log.removeChild(log.firstChild);
+}
+function appendLogSep(){
+  const log=document.getElementById('ai-log'); if(!log) return;
+  const line=document.createElement('div');
+  line.style.cssText='color:#1e3a5a;user-select:none;';
+  line.textContent='─'.repeat(42);
+  log.appendChild(line);
+  log.scrollTop=log.scrollHeight;
+}
+function copyLog(){
+  const log=document.getElementById('ai-log'); if(!log) return;
+  const text=[...log.children].map(c=>c.textContent).join('\n');
+  navigator.clipboard.writeText(text).then(()=>appendLog('ok','✅ 日志已复制到剪贴板'));
+}
+
+// ─── AI 15s Cycle ───
+let aiCycleTimer=null; let aiCountdown=AI_CYCLE; let aiRunning=false; let aiCallLock=false;
+let totalTokens=0;
+
+// Format token count for display
+function fmtTokens(n){ if(n>=1000) return (n/1000).toFixed(1)+'k'; return String(n); }
+
+function updateTokenDisplay(lastTokens){
+  const lastEl=document.getElementById('ai-tokens');
+  const totalEl=document.getElementById('ai-total-tokens');
+  if(lastEl) lastEl.textContent=lastTokens>0?fmtTokens(lastTokens):'--';
+  if(totalEl) totalEl.textContent=fmtTokens(totalTokens);
+}
+
+let aiCountdownStart=0;
+function startAICycle(){
+  if(aiCycleTimer) clearInterval(aiCycleTimer);
+  aiCountdown=AI_CYCLE; aiCountdownStart=Date.now();
+  updateAICycleUI();
+  aiCycleTimer=setInterval(()=>{
+    const elapsed=(Date.now()-aiCountdownStart)/1000;
+    aiCountdown=Math.max(0,AI_CYCLE-elapsed);
+    updateAICycleUI();
+    if(aiCountdown<=0){
+      clearInterval(aiCycleTimer); aiCycleTimer=null;
+      runAICheck().finally(()=>{ if(sysRunning) startAICycle(); });
+    }
+  },250);
+}
+
+function updateAICycleUI(){
+  const fill=document.getElementById('aicyc-fill'); const num=document.getElementById('aicyc-num');
+  if(fill){
+    fill.style.width=(Math.max(0,aiCountdown)/AI_CYCLE*100)+'%';
+    fill.style.background=aiRunning?(detectAnomalies(currentData).length>0?'#ff4d4f':'#fa8c16'):'var(--blue)';
+  }
+  if(num) num.textContent=Math.ceil(aiCountdown);
+}
+
+function isDaytime(d){ return (d.light||0) > 5; }
+
+function detectAnomalies(d){return Object.keys(SENSORS).filter(k=>{const v=d[k];if(v===undefined)return false;const s=SENSORS[k];
+  if(k==='co2'&&v<s.lo&&!isDaytime(d)) return false; // CO2 low at night is normal
+  if(k==='sap'&&v<s.lo&&!isDaytime(d)) return false; // Sap flow low at night is normal
+  // VPD is derived, skip anomaly check (handled via temp+hum)
+  if(k==='vpd') return false;
+  return v<s.lo||v>s.hi;});}
+
+async function runAICheck(){
+  if(aiRunning||aiCallLock) return;
+  aiRunning=true; aiCallLock=true;
+  try{
+  appendLogSep();
+  const startT=performance.now();
+  const anomalyKeys=detectAnomalies(currentData);
+  const isAnomaly=anomalyKeys.length>0;
+
+  // Step 1: read sensors
+  appendLog('data','📡 读取传感器数据 15项 → 重放帧 '+replayIdx+'/120');
+  await delay(120);
+
+  // Step 2: anomaly check with detail
+  if(!isAnomaly){
+    const checks=['temp','hum','co2','sub-w','ec'].map(k=>`${SENSORS[k].label}:${currentData[k]?.toFixed(1)||'--'}${SENSORS[k].unit} ✓`).join('  ');
+    appendLog('check','🔍 异常检测: '+checks);
+    await delay(100);
+    appendLog('check','🔍 全部15项参数在正常区间，无异常');
+  } else {
+    appendLog('check','🔍 异常检测完成，发现 '+anomalyKeys.length+' 项超限:');
+    anomalyKeys.forEach(k=>{
+      const v=currentData[k]?.toFixed?currentData[k].toFixed(1):currentData[k];
+      const s=SENSORS[k]; const dir=currentData[k]>s.hi?'↑':'↓';
+      appendLog('warn',`⚠️  ${SENSORS[k].label} = ${v}${s.unit}  (限值 ${s.lo}~${s.hi}) ${dir}`);
+    });
+  }
+  await delay(80);
+
+  // Step 3: DeepSeek call
+  showAIMode(isAnomaly?'warn':'api', isAnomaly?'⚠️ 异常 · 紧急推理':'🤖 DeepSeek 例行巡检');
+  appendLog('ai','🤖 调用 DeepSeek-v4-pro → '+(isAnomaly?'紧急决策推理':'例行管理建议'));
+  if(isAnomaly){
+    showAnomalyBox(anomalyKeys);
+    document.getElementById('alert-overlay')?.classList.add('active');
+  }
+
+  let result;
+  let lastTokens=0;
+  try{
+    if(isAnomaly) result=await callDeepSeekAnomaly(currentData,anomalyKeys);
+    else result=await callDeepSeekRoutine(currentData);
+    // Extract token usage from API response (stored on result by parse helper)
+    if(result._tokens){ lastTokens=result._tokens; totalTokens+=lastTokens; delete result._tokens; }
+  }catch(e){
+    appendLog('error','❌ API调用失败: '+e.message.substring(0,60));
+    const errType=e.name==='AbortError'?'[超时]':e.message.startsWith('HTTP')?'[HTTP错误]':'[网络/解析错误]';
+    appendLog('error','  '+errType+' '+e.message.substring(0,50));
+    result=isAnomaly?
+      {advices:[{text:'立即采取手动调控措施',sub:'API暂不可用，请人工介入'}],confidence:70,eta:'未知'}:
+      {advices:[{text:'系统运行正常，继续监测',sub:'API暂不可用'}],confidence:90};
+  }
+
+  const elapsed=((performance.now()-startT)/1000).toFixed(1);
+  const conf=result.confidence||93;
+  updateTokenDisplay(lastTokens);
+  appendLog('ai',`✅ DeepSeek 推理完成  耗时 ${elapsed}s  置信度 ${conf}%  本次 ${lastTokens>0?fmtTokens(lastTokens):'--'}tk  累计 ${fmtTokens(totalTokens)}tk`);
+  document.getElementById('ai-time').textContent=elapsed;
+  document.getElementById('ai-conf').textContent=conf+'%';
+
+  if(isAnomaly){
+    result.advices?.forEach((a,i)=>{ appendLog('exec',`📋 方案${i+1}: ${a.text}`); });
+    showAdviceBox(result.advices||[],result.eta||'约25分钟');
+    // Auto execute countdown
+    let cd=10;
+    appendLog('exec',`⏳ ${cd}s 后自动下发调控指令...`);
+    showAIMode('exec','⏳ '+cd+'s后自动执行');
+    const exTimer=setInterval(()=>{
+      cd--;
+      const pill=document.getElementById('ai-mode-pill'); if(pill) pill.textContent='⏳ '+cd+'s后自动执行';
+      if(cd<=0){ clearInterval(exTimer); appendLog('exec','▶ 调控指令下发 → 执行机构响应'); autoExecute(detectScenarioType(anomalyKeys)); }
+    },1000);
+  } else {
+    result.advices?.forEach((a,i)=>{ appendLog('ok',`📋 ${i+1}. ${a.text}`); });
+    showRoutineBox(result.advices||[]);
+    showAIMode('normal','✅ 正常监测');
+  }
+  }finally{
+    aiRunning=false;
+    aiCallLock=false;
+  }
+}
+
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+// Safe JSON extraction from AI response — layered parsing with ultimate fallback
+function safeParseAIResponse(content){
+  const logWarn=(msg)=>appendLog('warn','⚠️ '+msg);
+  const logErr=(msg)=>appendLog('error','❌ '+msg);
+
+  // Pre-normalization: fix common AI output issues that break JSON
+  let src=content||'';
+
+  // 1. Strip markdown code fences
+  src=src.replace(/```(?:json)?\s*/gi,'').replace(/```/g,'');
+
+  // 2. Normalize Chinese quotes to ASCII
+  src=src.replace(/“/g,'"').replace(/”/g,'"');  // ""  → ""
+  src=src.replace(/‘/g,"'").replace(/’/g,"'");  // ''  → '
+  src=src.replace(/：/g,':').replace(/，/g,',');  // ：→ :  ，→ ,
+
+  // 3. Remove // single-line and /* multi-line */ comments
+  src=src.replace(/\/\*[\s\S]*?\*\//g,'');
+  src=src.replace(/\/\/[^\n]*/g,'');
+
+  // Extract outermost { ... }
+  const first=src.indexOf('{'), last=src.lastIndexOf('}');
+  if(first>=0&&last>first) src=src.slice(first,last+1);
+
+  // ── Layer 1: direct parse ──
+  try{ return JSON.parse(src); }catch(e){}
+
+  // ── Layer 2: common fixes, try each independently ──
+  const fixes=[
+    // Fix trailing commas at end of objects/arrays
+    s=>s.replace(/,(\s*[}\]])/g,'$1'),
+    // Fix unescaped double-quotes inside string values (heuristic: between known keys)
+    s=>s.replace(/"([^"]*?)"([^,\[\]{}:]*?)"([^"]*?)"(\s*[:,}\]])/g,(m,before,inner,after,sep)=>{
+      // escape inner quotes if this looks like a string value context
+      return '"'+before+'\\"'+inner+'\\"'+after+'"'+sep;
+    }),
+    // Collapse newlines (but not embedded in strings that have \n escapes)
+    s=>s.replace(/(?<!\\)\n/g,' '),
+    // Remove control characters (0x00-0x1F except \t \n \r which are already handled)
+    s=>s.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,''),
+    // Fix duplicate keys by keeping the last occurrence
+    s=>{
+      const seen=new Set();
+      // This is hard to fix with regex alone; skip and let Layer 3 handle it
+      return s;
+    },
+  ];
+  for(let i=0;i<fixes.length;i++){
+    try{
+      const fixed=fixes[i](src);
+      return JSON.parse(fixed);
+    }catch(e2){}
+  }
+  // Combined: trailing commas + newline collapse
+  try{
+    let combined=src.replace(/,(\s*[}\]])/g,'$1');
+    combined=combined.replace(/(?<!\\)\n/g,' ').replace(/[\x00-\x08\x0b\x0c\x0e-\x1f]/g,'');
+    return JSON.parse(combined);
+  }catch(e3){}
+
+  // ── Layer 3: regex field extraction — salvage what we can ──
+  logWarn('结构化解析失败，启用正则字段提取');
+  const result={status:'未知',advices:[],confidence:0};
+  // Extract status
+  const stMatch=src.match(/"status"\s*:\s*"([^"]+)"/);
+  if(stMatch) result.status=stMatch[1];
+  // Extract confidence
+  const cfMatch=src.match(/"confidence"\s*:\s*(\d+)/);
+  if(cfMatch) result.confidence=parseInt(cfMatch[1],10)||0;
+  // Extract eta
+  const etaMatch=src.match(/"eta"\s*:\s*"([^"]+)"/);
+  if(etaMatch) result.eta=etaMatch[1];
+  // Extract alerts array
+  const alertsMatch=src.match(/"alerts"\s*:\s*\[([\s\S]*?)\]/);
+  if(alertsMatch){
+    const alertItems=alertsMatch[1].match(/"([^"]+)"/g);
+    if(alertItems) result.alerts=alertItems.map(a=>a.replace(/^"|"$/g,''));
+  }
+  // Extract advices array — each advice object with text and optional sub
+  const advMatch=src.match(/"advices"\s*:\s*\[([\s\S]*?)\]/);
+  if(advMatch){
+    const advices=[];
+    const advBlocks=advMatch[1].split(/\},\s*\{/);
+    advBlocks.forEach(block=>{
+      const textM=block.match(/"text"\s*:\s*"([^"]+)"/);
+      const subM=block.match(/"sub"\s*:\s*"([^"]+)"/);
+      if(textM) advices.push({text:textM[1],sub:subM?subM[1]:''});
+    });
+    if(advices.length>0) result.advices=advices;
+  }
+  if(result.advices.length===0){
+    result.advices=[{text:'AI响应格式异常，已启用备用解析',sub:'建议人工复核传感器数据'}];
+  }
+  logWarn('正则提取完成: status='+result.status+' advices='+result.advices.length+' conf='+result.confidence);
+  return result;
+}
+
+// HTML-escape to prevent XSS from AI output
+function escapeHTML(str){
+  const div=document.createElement('div');
+  div.textContent=str;
+  return div.innerHTML;
+}
+
+// ─── API request wrapper with timeout + retry ───
+const API_TIMEOUT_MS=25000, API_MAX_RETRIES=2, API_RETRY_BASE_MS=1000;
+
+async function fetchWithRetry(url,options,retriesLeft=API_MAX_RETRIES){
+  let lastError=null;
+  for(let attempt=0;attempt<=retriesLeft;attempt++){
+    const ctrl=new AbortController();
+    const tid=setTimeout(()=>ctrl.abort(),API_TIMEOUT_MS);
+    try{
+      const r=await fetch(url,{...options,signal:ctrl.signal});
+      clearTimeout(tid);
+      if(!r.ok){
+        const fatal=r.status>=400&&r.status<500&&r.status!==429;
+        throw new Error('HTTP '+r.status+(fatal?' (fatal)':''));
+      }
+      return r;
+    }catch(e){
+      clearTimeout(tid);
+      lastError=e;
+      const isTimeout=e.name==='AbortError';
+      const isFatal=e.message.includes('(fatal)');
+      if(attempt<retriesLeft&&!isFatal){
+        const delay=API_RETRY_BASE_MS*Math.pow(2,attempt);
+        appendLog('warn',`🔄 API${isTimeout?'超时':'错误'}，${delay/1000}s后重试(${attempt+1}/${retriesLeft})`);
+        await new Promise(r=>setTimeout(r,delay));
+      }
+    }
+  }
+  throw lastError;
+}
+
+async function callDeepSeekRoutine(d){
+  const p=`当前传感器:温度${d.temp}°C(22~26),湿度${d.hum}%(55~75),VPD${calcVPD(d.temp,d.hum)}kPa(0.8~1.2),CO₂${d.co2}ppm(白天800~1000,夜不补),DLI${dliAccum.toFixed(1)}(20~30),光照${d.light}klux(>50遮),冠层${d.canopy}°C,叶湿${d.leaf}%,茎流${d.sap}g/h,基质含水${d['sub-w']}%(60~75),EC${d.ec}mS/cm(2.5~3.5),pH${d.ph}(6.0~6.5),供液EC${d['sup-ec']}(2.5~3.2),回液率${d.drain}%(20~30)。定植后D23开花初期。灌溉2~3L/次隔30~45min。控温:L1>28通风F1F3,L2>30遮阳F2,L3>33全开降供液温。遮阳上午东下午西。给出3条管理建议。输出JSON:{"status":"正常","advices":[{"text":"","sub":""},{"text":"","sub":""},{"text":"","sub":""}],"confidence":96}`;
+  const r=await fetchWithRetry(DSURL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DSKEY},body:JSON.stringify({model:'deepseek-v4-pro',max_tokens:800,temperature:0,messages:[
+    {role:'system',content:'你是耘仓温室小番茄AI专家。仅输出原生JSON对象。禁止markdown代码块。禁止任何解释、问候、补充说明。你的每次回复都只能是纯JSON。'},
+    {role:'user',content:p}
+  ]})});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  if(!j?.choices?.[0]?.message?.content) throw new Error('API返回结构异常');
+  const result=safeParseAIResponse(j.choices[0].message.content);
+  result._tokens=j.usage?.total_tokens||0;
+  return result;
+}
+
+async function callDeepSeekAnomaly(d,anomalyKeys){
+  const aInfo=anomalyKeys.map(k=>`${SENSORS[k].label}:${d[k]?.toFixed?d[k].toFixed(1):d[k]}${SENSORS[k].unit}(限${SENSORS[k].lo}~${SENSORS[k].hi})`).join(',');
+  const p=`异常:${aInfo}。数据:温度${d.temp}°C(22~26,>28L1>30L2>33L3),湿度${d.hum}%(55~75),VPD${calcVPD(d.temp,d.hum)}kPa(0.8~1.2),CO₂${d.co2}ppm(白天800~1000,夜不补),DLI${dliAccum.toFixed(1)}(20~30),光照${d.light}klux(>50遮),冠层${d.canopy}°C,叶湿${d.leaf}%,茎流${d.sap}g/h,基质含水${d['sub-w']}%(60~75,<45紧急),EC${d.ec}mS/cm(2.5~3.5),pH${d.ph}(6.0~6.5),供液EC${d['sup-ec']}(2.5~3.2),回液率${d.drain}%(20~30)。定植后D23开花。花粉>32°C持续2h受损。CO₂饱和点1000ppm。灌溉2~3L/30~45min。遮阳上午东下午西。给出分级紧急调控L1/L2/L3,含补灌量和间隔。输出JSON:{"status":"异常","alerts":["原因1","原因2"],"advices":[{"text":"措施1","sub":"参数1"},{"text":"措施2","sub":"参数2"},{"text":"措施3","sub":"参数3"}],"confidence":91,"eta":"约X分钟"}`;
+  const r=await fetchWithRetry(DSURL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DSKEY},body:JSON.stringify({model:'deepseek-v4-pro',max_tokens:900,temperature:0,messages:[
+    {role:'system',content:'你是耘仓温室小番茄AI专家。仅输出原生JSON对象。禁止markdown代码块。禁止任何解释、问候、补充说明。你的每次回复都只能是纯JSON。'},
+    {role:'user',content:p}
+  ]})});
+  if(!r.ok) throw new Error('HTTP '+r.status);
+  const j=await r.json();
+  if(!j?.choices?.[0]?.message?.content) throw new Error('API返回结构异常');
+  const result=safeParseAIResponse(j.choices[0].message.content);
+  result._tokens=j.usage?.total_tokens||0;
+  return result;
+}
+
+// ─── Variety Switch (Demo placeholder) ───
+function switchVariety(v){
+  if(v==='blueberry'){ appendLog('warn','🫐 蓝莓品种切换功能敬请期待'); return; }
+  appendLog('ok','🍅 当前品种: 小番茄（樱桃番茄）');
+}
+
+function detectScenarioType(keys){
+  if(keys.some(k=>k==='temp'||k==='canopy')){
+    const t=currentData.temp||25;
+    if(t>33) return 'highTempL3';
+    if(t>30) return 'highTempL2';
+    return 'highTempL1';
+  }
+  if(keys.includes('co2')) return 'lowCO2';
+  if(keys.includes('sub-w')) return 'waterDeficit';
+  return 'generic';
+}
+
+// ─── UI State ───
+function showAIMode(mode,text){
+  const pill=document.getElementById('ai-mode-pill'); if(!pill) return;
+  const C={normal:'aim-normal',check:'aim-check',warn:'aim-warn',api:'aim-api',exec:'aim-exec'};
+  pill.className='ai-mode-pill '+(C[mode]||'aim-normal'); pill.textContent=text;
+  const badge=document.getElementById('ai-badge');
+  // Keep connection status text when other mode changes come in
+  const keepStatus = badge?.textContent?.startsWith('✅') || badge?.textContent?.startsWith('❌') || badge?.textContent?.startsWith('⚠');
+  if(badge && !keepStatus){
+    badge.textContent=mode==='api'?'🤖 推理':mode==='warn'?'⚠ 异常':mode==='exec'?'▶ 执行':'DeepSeek';
+    badge.className='pbadge'+(mode==='warn'?' warn':'');
+  }
+}
+
+function showAnomalyBox(keys){
+  const box=document.getElementById('ai-anomaly-box'); const tags=document.getElementById('ai-anomaly-tags');
+  if(!box||!tags) return;
+  tags.innerHTML=''; keys.forEach(k=>{
+    const span=document.createElement('span'); span.className='ai-atag';
+    const v=currentData[k]?.toFixed?currentData[k].toFixed(1):currentData[k];
+    span.textContent='⚠ '+escapeHTML(SENSORS[k]?.label||k)+': '+v+(SENSORS[k]?.unit||'');
+    tags.appendChild(span);
+  });
+  box.classList.add('show');
+  // Shift advice box below anomaly box to avoid overlap
+  const ab=document.getElementById('ai-advice-box'); if(ab) ab.style.top='auto';
+  const rb=document.getElementById('ai-routine-box'); if(rb) rb.style.top='auto';
+  setGHBanner('warn','⚠️ 异常检测 · DeepSeek紧急推理中');
+}
+function hideAnomalyBox(){
+  const box=document.getElementById('ai-anomaly-box');
+  if(box){ box.classList.remove('show'); }
+  document.getElementById('alert-overlay')?.classList.remove('active');
+}
+
+function showRoutineBox(advices){
+  const rb=document.getElementById('ai-routine-box'); const al=document.getElementById('adv-list-routine'); const ab=document.getElementById('ai-advice-box'); const anb=document.getElementById('ai-anomaly-box');
+  if(rb) rb.classList.add('show'); if(ab) ab.classList.remove('show');
+  // If anomaly box is visible, shift routine box below it
+  if(rb){
+    if(anb&&anb.classList.contains('show')){
+      const h=anb.offsetHeight; rb.style.top=(h+36)+'px'; rb.style.maxHeight='46%';
+    } else {
+      rb.style.top='28px'; rb.style.maxHeight='52%';
+    }
+  }
+  if(al){ al.innerHTML=''; advices.slice(0,3).forEach((a,i)=>{
+    const div=document.createElement('div'); div.className='adv-item'; div.id='ar'+i;
+    const num=document.createElement('div'); num.className='adv-num g'; num.textContent=i+1;
+    const wrap=document.createElement('div');
+    const txt=document.createElement('div'); txt.className='adv-txt'; txt.textContent=a.text||'';
+    const sub=document.createElement('div'); sub.className='adv-sub'; sub.textContent=a.sub||'';
+    wrap.appendChild(txt); wrap.appendChild(sub);
+    div.appendChild(num); div.appendChild(wrap);
+    al.appendChild(div);
+    setTimeout(()=>div.classList.add('vis'),i*380+100);
+  });}
+  // Auto-fade after 20s
+  clearTimeout(window._routineFadeTimer);
+  window._routineFadeTimer=setTimeout(()=>{ if(rb) rb.classList.remove('show'); },20000);
+}
+function showAdviceBox(advices,eta){
+  const rb=document.getElementById('ai-routine-box'); const ab=document.getElementById('ai-advice-box'); const al=document.getElementById('adv-list'); const et=document.getElementById('ai-eta-text'); const anb=document.getElementById('ai-anomaly-box');
+  if(rb) rb.classList.remove('show'); if(ab) ab.classList.add('show'); if(et) et.textContent='预计恢复: '+eta;
+  // If anomaly box is visible, shift advice box below it
+  if(ab){
+    if(anb&&anb.classList.contains('show')){
+      const h=anb.offsetHeight; ab.style.top=(h+36)+'px'; ab.style.maxHeight='46%';
+    } else {
+      ab.style.top='28px'; ab.style.maxHeight='52%';
+    }
+  }
+  if(al){ al.innerHTML=''; advices.slice(0,3).forEach((a,i)=>{
+    const div=document.createElement('div'); div.className='adv-item'; div.id='adv'+i;
+    const num=document.createElement('div'); num.className='adv-num'; num.textContent=i+1;
+    const wrap=document.createElement('div');
+    const txt=document.createElement('div'); txt.className='adv-txt'; txt.textContent=a.text||'';
+    const sub=document.createElement('div'); sub.className='adv-sub'; sub.textContent=a.sub||'';
+    wrap.appendChild(txt); wrap.appendChild(sub);
+    div.appendChild(num); div.appendChild(wrap);
+    al.appendChild(div);
+    setTimeout(()=>div.classList.add('vis'),i*450+200);
+  });}
+}
+
+// ─── Greenhouse SVG ───
+function setGHBanner(cls,txt){const b=document.getElementById('ghbanner');if(b){b.className='ghbanner '+cls;b.textContent=txt;}}
+
+function setHeatmap(on,temp){
+  const intensity=on?Math.max(0.08,Math.min(0.55,(temp-18)/20)):0;
+  [1,2,3].forEach(i=>{
+    const a=document.getElementById('h'+i+'a');const b=document.getElementById('h'+i+'b');
+    if(a) a.setAttribute('stop-opacity',(intensity*0.9).toString());
+    if(b) b.setAttribute('stop-opacity',(intensity*0.35).toString());
+    const hz=document.getElementById('hz'+i); if(hz) hz.setAttribute('opacity',on?'1':'0');
+  });
+}
+
+function animateHeatDissipation(){
+  const zones=[{id:'hz1',cx0:275},{id:'hz2',cx0:703},{id:'hz3',cx0:1128}];
+  const dur=3500; const start=performance.now();
+  function step(ts){
+    const p=Math.min((ts-start)/dur,1); const ease=1-Math.pow(1-p,3);
+    zones.forEach(z=>{const el=document.getElementById(z.id);if(!el)return;el.setAttribute('cx',z.cx0+ease*380);el.setAttribute('opacity',(0.75*(1-p)).toString());});
+    if(p<1) requestAnimationFrame(step);
+    else zones.forEach(z=>{const el=document.getElementById(z.id);if(el){el.setAttribute('cx',z.cx0.toString());el.setAttribute('opacity','0');}});
+  }
+  requestAnimationFrame(step);
+}
+
+function animateCO2Bubbles(){
+  const container=document.getElementById('co2-bubbles'); if(!container) return;
+  const xs=[130,280,420,570,700,845,990,1130,1272];
+  xs.forEach((bx,i)=>{
+    setTimeout(()=>{
+      const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+      const r=6+Math.random()*5; const ox=bx+(Math.random()-0.5)*18;
+      const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',ox);c.setAttribute('cy','242');c.setAttribute('r',r);
+      c.setAttribute('fill','rgba(100,200,80,0.32)');c.setAttribute('stroke','rgba(82,196,26,0.55)');c.setAttribute('stroke-width','0.8');
+      const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+      t.setAttribute('x',ox);t.setAttribute('y','246');t.setAttribute('text-anchor','middle');t.setAttribute('font-size','5.5');t.setAttribute('fill','#237804');t.setAttribute('font-family','monospace');t.textContent='CO₂';
+      g.appendChild(c);g.appendChild(t);container.appendChild(g);
+      const dur=5000+Math.random()*3000; const st=performance.now();
+      function step(ts){
+        const p=Math.min((ts-st)/dur,1); const ease=1-Math.pow(1-p,1.5);
+        const y=242+(98-242)*ease; const sw=Math.sin(p*Math.PI*4)*5;
+        c.setAttribute('cy',y);t.setAttribute('y',y+4);c.setAttribute('cx',ox+sw);t.setAttribute('x',ox+sw);
+        g.setAttribute('opacity',(1-Math.pow(p,1.5)).toString());
+        if(p<1) requestAnimationFrame(step); else if(container.contains(g)) container.removeChild(g);
+      }
+      requestAnimationFrame(step);
+    },i*460);
+  });
+}
+
+// RAF-based shade animation using direct ID references (avoids querySelectorAll SVG issues)
+function animateShade(shadeId, targetPct, dur=1500){
+  const rect=document.getElementById(shadeId); if(!rect) return;
+  const maxW=SHADE_MAXW[shadeId]||425;
+  const startW=parseFloat(rect.getAttribute('width')||'0');
+  const targetW=maxW*targetPct/100;
+  const sx=parseFloat(rect.getAttribute('x')||'62');
+  const st=performance.now();
+  // Map shade rect IDs to their 4 stripe IDs
+  const stripeIds=[];
+  for(let i=0;i<4;i++){ stripeIds.push('stripe-'+shadeId+'-'+i); }
+  function step(ts){
+    const p=Math.min((ts-st)/dur,1); const ease=1-Math.pow(1-p,2);
+    const w=Math.max(0,startW+(targetW-startW)*ease);
+    rect.setAttribute('width',w.toFixed(1));
+    const x2=(sx+w).toFixed(1);
+    stripeIds.forEach(sid=>{ const s=document.getElementById(sid); if(s) s.setAttribute('x2',x2); });
+    if(p<1) requestAnimationFrame(step);
+  }
+  requestAnimationFrame(step);
+}
+
+function setShadeUI(barId,pct){
+  const el=document.getElementById(barId); if(el) el.style.width=pct+'%';
+  const lblMap={'she':'shep','shm':'shmp','shw':'shwp'};
+  const lbl=document.getElementById(lblMap[barId]); if(lbl) lbl.textContent=pct+'%';
+}
+
+// Vent animation: height 5→12 with color change
+function animateVents(open, dur=600){
+  const tH=open?12:5; const fill=open?'#60d0f0':'#a8d0e8';
+  for(let i=0;i<9;i++){
+    const el=document.getElementById('vent'+i); if(!el) continue;
+    el.setAttribute('fill',fill);
+    const sH=parseFloat(el.getAttribute('height')||'5'); const st=performance.now();
+    (function(e,sh){
+      function step(ts){const p=Math.min((ts-st)/dur,1);const ease=1-Math.pow(1-p,2);e.setAttribute('height',(sh+(tH-sh)*ease).toFixed(1));if(p<1) requestAnimationFrame(step);}
+      requestAnimationFrame(step);
+    })(el,sH);
+  }
+}
+
+// Pipe pulse: flowing dots from right (EQ) to left along main pipe
+function animatePipePulse(count=3){
+  const svg=document.getElementById('ghsvg'); if(!svg) return;
+  const container=document.getElementById('pipe-pulses'); if(!container) return;
+  for(let i=0;i<count;i++){
+    setTimeout(()=>{
+      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('r','4'); dot.setAttribute('cy','250'); dot.setAttribute('fill','#40aaff'); dot.setAttribute('opacity','0.85');
+      container.appendChild(dot);
+      const pDur=2800; const st=performance.now();
+      function step(ts){const p=Math.min((ts-st)/pDur,1);dot.setAttribute('cx',(1340+(60-1340)*p).toFixed(0));dot.setAttribute('opacity',(0.85*(1-p*0.4)).toString());if(p<1) requestAnimationFrame(step);else if(container.contains(dot)) container.removeChild(dot);}
+      requestAnimationFrame(step);
+    },i*1100);
+  }
+}
+
+// CO2 pipe flow toggle
+function setCO2Pipe(on){const el=document.getElementById('co2-flow');if(el) el.setAttribute('opacity',on?'1':'0');}
+
+// Pump LED
+function setPumpLED(on){const el=document.getElementById('pump-led');if(el) el.setAttribute('opacity',on?'1':'0');}
+
+// Water drops
+function setWaterDrops(on){const el=document.getElementById('water-drops');if(el) el.setAttribute('opacity',on?'1':'0');}
+function setAirflow(on){const el=document.getElementById('airflow-anim');if(el) el.setAttribute('opacity',on?'1':'0');}
+
+// ─── Fan Animation ───
+const fanState={1:{angle:0,speed:3,target:3},2:{angle:0,speed:0,target:0},3:{angle:0,speed:4,target:4}};
+let fanRunning=true;
+function animateFans(){
+  if(!fanRunning) return;
+  [1,2,3].forEach(n=>{
+    const diff=fanState[n].target-fanState[n].speed;
+    if(Math.abs(diff)>0.1) fanState[n].speed+=diff*0.04;
+    else fanState[n].speed=fanState[n].target;
+    fanState[n].angle=(fanState[n].angle+fanState[n].speed)%360;
+    const pb=document.getElementById('fan'+n+'-blades'); const gb=document.getElementById('ghfb-F'+n);
+    if(pb) pb.setAttribute('transform','rotate('+fanState[n].angle+')');
+    if(gb) gb.setAttribute('transform','rotate('+fanState[n].angle+')');
+  });
+  requestAnimationFrame(animateFans);
+}
+
+function setFan(n,on,wattStr,pct){
+  fanState[n].target=on?Math.max(1.5,pct/10):0;
+  const fw=document.getElementById('fw'+n),fs=document.getElementById('fs'+n),fp=document.getElementById('fp'+n);
+  if(fw){fw.textContent=on?wattStr:'待机';fw.style.color=on?'var(--blue)':'var(--t3)';}
+  if(fs){fs.textContent=on?'运行':'待机';fs.className='fan-badge '+(on?'on':'off');}
+  if(fp) fp.style.width=(on?pct:0)+'%';
+  const blades=document.getElementById('fan'+n+'-blades');
+  if(blades)[...blades.children].forEach(p=>p.setAttribute('fill',on?'#1677ff':'#b0b8c8'));
+}
+
+// Plant wilting
+let plantsWilted=false;
+function setPlantWilt(on){
+  plantsWilted=on; generatePlants(on);
+}
+
+// ─── Auto Execute ───
+let execLock=false;
+function autoExecute(type){
+  if(execLock) return; execLock=true;
+  showAIMode('exec','▶ 调控执行中');
+  setGHBanner('exec','▶ 调控指令执行中 · 执行机构响应');
+  document.getElementById('kwh').textContent='28.6';
+
+  if(type==='highTempL1'){
+    // L1 (>28°C): open vents, F1+F3 low speed
+    appendLog('exec','🌡️ 一级响应 · 开启通风窗+F1F3低速');
+    setFan(1,true,'0.8kW',55); setFan(2,false,'',0); setFan(3,true,'0.9kW',55);
+    fanState[1].target=4; fanState[2].target=0; fanState[3].target=4;
+    setAirflow(true); animateVents(true);
+    setTimeout(animateHeatDissipation,2000);
+  } else if(type==='highTempL2'){
+    // L2 (>30°C): vents + shades + F2 assist
+    appendLog('exec','🌡️ 二级响应 · 展开遮阳帘+F2辅助降温');
+    fanState[1].target=8; fanState[2].target=5; fanState[3].target=8;
+    setFan(1,true,'1.2kW',78); setFan(2,true,'0.9kW',55); setFan(3,true,'1.2kW',78);
+    // Time-aware shade: morning east-first, afternoon west-first
+    const hh=new Date().getHours();
+    if(hh>=6&&hh<12){ animateShade('shd-e',100); animateShade('shd-m',50); animateShade('shd-w',30); setShadeUI('she',100); setShadeUI('shm',50); setShadeUI('shw',30); }
+    else if(hh>=12&&hh<18){ animateShade('shd-e',30); animateShade('shd-m',50); animateShade('shd-w',100); setShadeUI('she',30); setShadeUI('shm',50); setShadeUI('shw',100); }
+    else { animateShade('shd-e',70); animateShade('shd-m',70); animateShade('shd-w',70); setShadeUI('she',70); setShadeUI('shm',70); setShadeUI('shw',70); }
+    setAirflow(true); animateVents(true);
+    setTimeout(animateHeatDissipation,1800);
+    setTimeout(animateHeatDissipation,5500);
+  } else if(type==='highTempL3'){
+    // L3 (>33°C): full shades + full fans + lower supply temp
+    appendLog('exec','🌡️ 三级响应 · 全部遮阳帘+风机全速+降低供液温度');
+    fanState[1].target=13; fanState[2].target=11; fanState[3].target=13;
+    setFan(1,true,'1.8kW',100); setFan(2,true,'1.6kW',90); setFan(3,true,'1.8kW',100);
+    animateShade('shd-e',100); animateShade('shd-m',100); animateShade('shd-w',100);
+    setShadeUI('she',100); setShadeUI('shm',100); setShadeUI('shw',100);
+    const se=document.getElementById('sup-ec-disp'); if(se) se.textContent='2.2';
+    const sc=document.getElementById('scr-ec'); if(sc) sc.textContent='EC: 2.20 mS/cm';
+    setAirflow(true); animateVents(true);
+    setTimeout(animateHeatDissipation,1800);
+    setTimeout(animateHeatDissipation,5500);
+  } else if(type==='lowCO2'){
+    // CO2 enrichment only during daytime
+    if(!isDaytime(currentData)){ appendLog('warn','🌙 夜间CO₂偏低属正常现象，不触发补气'); execLock=false; return; }
+    setCO2Pipe(true);
+    setTimeout(animateCO2Bubbles,400);
+    setTimeout(animateCO2Bubbles,4200);
+    setFan(1,true,'0.7kW',38); setFan(2,true,'0.5kW',25); setFan(3,true,'0.7kW',38);
+    fanState[1].target=4; fanState[2].target=3; fanState[3].target=4;
+  } else if(type==='waterDeficit'){
+    setWaterDrops(true); setPumpLED(true); animatePipePulse(4);
+    document.getElementById('irr-now').textContent='4.8L';
+    setFan(1,true,'1.2kW',85); setFan(2,false,'',0); setFan(3,true,'1.4kW',92);
+  }
+
+  // Recovery after 12s
+  setTimeout(()=>{
+    appendLog('ok','✅ 调控执行完成，参数恢复中，继续监测');
+    setAirflow(false); animateVents(false); setWaterDrops(false); setPumpLED(false); setCO2Pipe(false);
+    setHeatmap(false,25);
+    document.getElementById('temp-overlay')?.setAttribute('fill','rgba(255,60,0,0)');
+    document.getElementById('alert-overlay')?.classList.remove('active');
+    setFan(1,true,'1.2kW',85); setFan(2,false,'',0); setFan(3,true,'1.4kW',92);
+    fanState[1].target=3; fanState[2].target=0; fanState[3].target=4;
+    animateShade('shd-e',100); animateShade('shd-m',50); animateShade('shd-w',0);
+    setShadeUI('she',100); setShadeUI('shm',50); setShadeUI('shw',0);
+    // Restore supply EC display after L3 cooling
+    const se2=document.getElementById('sup-ec-disp'); if(se2) se2.textContent='2.5';
+    const sc2=document.getElementById('scr-ec'); if(sc2) sc2.textContent='EC: 2.50 mS/cm';
+    document.getElementById('kwh').textContent='18.4'; document.getElementById('irr-now').textContent='2.4L';
+    hideAnomalyBox();
+    document.getElementById('ai-advice-box')?.classList.remove('show');
+    document.getElementById('ai-routine-box')?.classList.remove('show');
+    // Reset overlay positions
+    const abx=document.getElementById('ai-advice-box'); if(abx) abx.style.top='28px';
+    const rbx=document.getElementById('ai-routine-box'); if(rbx) rbx.style.top='28px';
+    setGHBanner('normal','✅ 调控完成 · 持续监测恢复过程');
+    showAIMode('normal','✅ 正常监测');
+    if(plantsWilted) setPlantWilt(false);
+    execLock=false;
+  },12000);
+}
+
+// ─── Plant Generation ───
+function generatePlants(wilted=false){
+  const container=document.getElementById('plant-container'); if(!container) return;
+  const spans=[[60,489],[489,918],[918,1340]];
+  const baseY=214; const spacing=30; const xoff=22;
+  const leafColor=wilted?'#7a9050':'#3d8a28'; const stemColor=wilted?'#4a7028':'#2a6018';
+  let html='';
+  spans.forEach(([sx0,sx1])=>{
+    const x0=sx0+xoff; const x1=sx1-xoff; const w=x1-x0; const n=Math.floor(w/spacing);
+    for(let i=0;i<n;i++){
+      const px=x0+(i+0.5)*(w/n); const ph=(wilted?32:42)+Math.random()*14;
+      const ry_factor=wilted?0.72:1.0;
+      const ptop=baseY-ph;
+      html+=`<line x1="${px.toFixed(0)}" y1="${baseY}" x2="${px.toFixed(0)}" y2="${ptop.toFixed(0)}" stroke="${stemColor}" stroke-width="1.8"/>`;
+      const lh=[0.35,0.62,0.84]; const ls=[-1,1,-1]; const la=[-50,48,-44];
+      lh.forEach((frac,li)=>{const ly=baseY-ph*frac;const lx=px+ls[li]*9;const rx=10+Math.random()*4;const ry=(6+Math.random()*2)*ry_factor;html+=`<ellipse cx="${lx.toFixed(0)}" cy="${ly.toFixed(0)}" rx="${rx.toFixed(0)}" ry="${ry.toFixed(1)}" fill="${leafColor}" transform="rotate(${la[li]},${lx.toFixed(0)},${ly.toFixed(0)})"/>`;});
+      const nT=Math.random()>0.4?2:1;
+      for(let t=0;t<nT;t++){
+        const tf=0.22+t*0.22; const ty=baseY-ph*tf; const tx=px+(t%2===0?7:-7);
+        const stage=Math.random(); const tc=stage>0.55?(wilted?'#c83818':'#d82010'):stage>0.3?(wilted?'#d05020':'#f05828'):'#c8dd20';
+        const tr=(4+Math.random()*2.5)*(wilted?0.85:1);
+        html+=`<circle cx="${tx.toFixed(0)}" cy="${ty.toFixed(0)}" r="${tr.toFixed(1)}" fill="${tc}"/>`;
+        html+=`<line x1="${px.toFixed(0)}" y1="${ty.toFixed(0)}" x2="${tx.toFixed(0)}" y2="${ty.toFixed(0)}" stroke="${stemColor}" stroke-width="0.8"/>`;
+      }
+      if(!wilted&&Math.random()>0.62){html+=`<circle cx="${px.toFixed(0)}" cy="${(ptop+4).toFixed(0)}" r="3" fill="#ffe066"/><circle cx="${px.toFixed(0)}" cy="${(ptop+4).toFixed(0)}" r="1.5" fill="#d4a000"/>`;}
+    }
+  });
+  container.innerHTML=html;
+}
+
+// ─── Jump Controls ───
+function jumpToNormal(){replayIdx=0;document.getElementById('gbn')?.classList.add('active');document.getElementById('gba')?.classList.remove('active');document.getElementById('kwh').textContent='18.4';}
+function jumpToAnomaly(){replayIdx=50;document.getElementById('gba')?.classList.add('active');document.getElementById('gbn')?.classList.remove('active');}
+
+// ─── CSV Export ───
+function exportCSV(){
+  const keys=Object.keys(SENSORS);
+  const header=['timestamp',...keys.map(k=>SENSORS[k].label+'('+SENSORS[k].unit+')')].join(',');
+  const allTs=[...new Set(Object.values(dataBuffer).flat().map(p=>p.ts))].sort();
+  const rows=allTs.slice(-500).map(ts=>[new Date(ts).toLocaleString('zh-CN'),...keys.map(k=>{const p=dataBuffer[k].find(pp=>pp.ts===ts);return p?p.v:'';})].join(','));
+  const blob=new Blob(['\ufeff'+[header,...rows].join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='yuncang_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+// ─── System Start/Stop ───
+let sysRunning=false; let replayTimer=null; let aiTimer=null; let clockTimer=null;
+function sysStart(){
+  if(sysRunning) return; sysRunning=true;
+  document.getElementById('btn-start').style.display='none';
+  document.getElementById('btn-stop').style.display='';
+  document.getElementById('sys-status').textContent='运行中';
+  document.getElementById('sys-pulse').style.background='#52c41a';
+  document.getElementById('sys-pulse').style.boxShadow='0 0 6px #52c41a';
+  // Clock
+  if(!clockTimer) clockTimer=setInterval(()=>{
+    try{ document.getElementById('clk').textContent=new Date().toLocaleTimeString('zh-CN'); }catch(e){}
+  },1000);
+  // Data replay
+  try{ stepReplay(); }catch(e){ appendLog('error','重放启动失败: '+e.message); }
+  replayTimer=setInterval(()=>{ try{ stepReplay(); }catch(e){}; },5000);
+  // AI cycle
+  startAICycle();
+  appendLog('ok','▶ 系统已启动');
+}
+function sysStop(){
+  if(!sysRunning) return; sysRunning=false;
+  if(replayTimer){ clearInterval(replayTimer); replayTimer=null; }
+  if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+  if(aiCycleTimer){ clearInterval(aiCycleTimer); aiCycleTimer=null; }
+  document.getElementById('btn-start').style.display='';
+  document.getElementById('btn-stop').style.display='none';
+  document.getElementById('sys-status').textContent='已停止';
+  document.getElementById('sys-pulse').style.background='#8a9ab0';
+  document.getElementById('sys-pulse').style.boxShadow='none';
+  setGHBanner('normal','⏸ 系统已停止');
+  appendLog('warn','⏸ 系统已停止');
+  fanRunning=false;
+}
+
+// ─── Clock (only starts on sysStart) ───
+document.getElementById('clk').textContent=new Date().toLocaleTimeString('zh-CN');
+
+// ─── Init with per-module protection ───
+window.addEventListener('load',()=>{
+  // Safety: ensure ECharts loaded
+  if(typeof echarts==='undefined'){
+    appendLog('error','❌ ECharts CDN 未加载，图表功能降级 — 请检查网络连接');
+    // Show fallback text in chart cells
+    document.querySelectorAll('.chart-container').forEach(el=>{
+      el.innerHTML='<div style="padding:20px;text-align:center;color:#ff4d4f;font-size:10px;">⚠ 图表组件加载失败<br><span style="color:#8a9ab0;font-size:9px;">请刷新页面或检查网络</span></div>';
+    });
+  }
+
+  // Module 1: Init log
+  try{
+    appendLog('ok','🌱 耘仓温室智能管控系统 v5.0 启动 · 小番茄定植后D23');
+    appendLog('data','📡 数据重放模式 · 10分钟剧本循环 · 5秒/帧');
+    appendLog('ai','🤖 DeepSeek 全周期接管 · 每15秒巡检一次');
+    appendLogSep();
+  }catch(e){ console.error('Log init failed:',e); }
+
+  // Module 2: Charts
+  try{ if(typeof echarts!=='undefined') initCharts(); }catch(e){ appendLog('error','图表初始化失败: '+e.message); }
+
+  // Module 3: Plants
+  try{ generatePlants(false); }catch(e){ appendLog('error','植株生成失败: '+e.message); console.error('generatePlants:',e); }
+
+  // Module 4: Fan animation
+  try{ requestAnimationFrame(animateFans); }catch(e){ console.error('Fan animation failed:',e); }
+
+  // Module 5: Initial shade
+  try{
+    animateShade('shd-e',100,800);
+    animateShade('shd-m',50,800);
+    animateShade('shd-w',0,800);
+  }catch(e){ console.error('Shade animation failed:',e); }
+
+  // Module 5b: Chart resize handler
+  if(typeof echarts!=='undefined'){
+    window.addEventListener('resize',()=>{ Object.values(chartInstances).forEach(c=>{ try{c.resize()}catch(e){} }); Object.keys(GROUPS).forEach(grp=>renderLegendHTML(grp)); });
+  }
+
+  // Module 6: Initial fan state
+  try{ setFan(1,true,'1.2kW',85); setFan(2,false,'',0); setFan(3,true,'1.4kW',92); }catch(e){ console.error('Fan init failed:',e); }
+
+  // Module 7: Banner
+  try{ setGHBanner('normal','✅ 系统就绪 · 请点击启动按钮'); }catch(e){ console.error('Banner failed:',e); }
+
+  // Module 8: DeepSeek connectivity check (lightweight, max_tokens=1)
+  try{
+    appendLog('data','🔗 检测 DeepSeek API 连通性...');
+    setTimeout(async()=>{
+      try{
+        const t0=performance.now();
+        const r=await fetchWithRetry(DSURL,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+DSKEY},
+          body:JSON.stringify({model:'deepseek-v4-pro',max_tokens:1,temperature:0,messages:[{role:'user',content:'ping'}]})},0);
+        const ms=(performance.now()-t0).toFixed(0);
+        if(r.ok){
+          const aiBadge=document.getElementById('ai-badge');
+          if(aiBadge){ aiBadge.textContent='✅ 已连接'; aiBadge.className='pbadge ok'; }
+          appendLog('ok','✅ DeepSeek API 已连接 (延迟 '+ms+'ms)');
+        } else {
+          appendLog('warn','⚠️ DeepSeek API 响应异常 HTTP '+r.status);
+          const aiBadge=document.getElementById('ai-badge');
+          if(aiBadge){ aiBadge.textContent='⚠ 异常'; aiBadge.className='pbadge warn'; }
+        }
+      }catch(e){
+        appendLog('error','❌ DeepSeek API 连接失败: '+e.message.substring(0,50));
+        const aiBadge=document.getElementById('ai-badge');
+        if(aiBadge){ aiBadge.textContent='❌ 离线'; aiBadge.className='pbadge warn'; }
+      }
+    },800);
+  }catch(e){ console.error('DS check failed:',e); }
+
+  // Auto-start system
+  setTimeout(()=>{ try{ sysStart(); }catch(e){ console.error('Auto-start failed:',e); } },2000);
+});
+
+</script>
+</body>
+</html>
